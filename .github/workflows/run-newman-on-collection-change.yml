@@ -1,0 +1,31 @@
+name: Run Newman on Postman Collection Change
+
+on:
+  push:
+    paths:
+      - 'postman/collections/*.json'
+  pull_request:
+    paths:
+      - 'postman/collections/*.json'
+
+jobs:
+  run-newman:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run Newman on all collections
+        run: |
+          for collection in postman/collections/*.json; do
+            echo "Running Newman for $collection"
+            newman run "$collection"
+          done
