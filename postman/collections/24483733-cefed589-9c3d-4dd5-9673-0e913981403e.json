@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "24483733-cefed589-9c3d-4dd5-9673-0e913981403e",
 		"name": "LED Name Badge API",
-		"description": "API for controlling the LED name badge\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed",
+		"description": "API for controlling LED name badges\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
