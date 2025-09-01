@@ -43,13 +43,13 @@ access to the badge via USB.
 
 ### Required dependencies on Arch Linux
 
-    sudo pacman -Syu python-pyusb python-hidapi
+    sudo pacman -Syu python-pyusb python-hidapi python-flask 
 
 ### Required dependencies on Debian/Ubuntu Systems
 
 #### Using Debian/Ubuntu packages (recommended):
 
-    sudo apt install python3-usb python3-pil
+    sudo apt install python3-usb python3-pil python3-flask
 
 #### manually using a python virtual environment
 
@@ -62,7 +62,7 @@ of `python` / `pip`.
     sudo apt install python3-venv
     python -m venv ledtag
     source ledtag/bin/activate
-    pip install pyhidapi pyusb pillow
+    pip install pyhidapi pyusb pillow flask
     # this should now work:
     # python led-badge-11x44.py -m 6 -s 8 "Hello" "World!"
 
@@ -75,7 +75,7 @@ To reuse the venv again at a later point:
 
 ### Required dependencies on Fedora Systems
 
-    sudo dnf install hidapi python3-hidapi python3-pillow python3-pyusb
+    sudo dnf install hidapi python3-hidapi python3-pillow python3-pyusb python3-flask
 
 ### Manual link the HID API lib for some Linuxes
 
@@ -93,6 +93,7 @@ address Python 3 explicitly by using the command `pip3` instead of `pip`.
     sudo easy_install pip
     pip install pyhidapi
     pip install pillow
+    pip install flask
     ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)" < /dev/null 2> /dev/null
     brew install hidapi
 
@@ -135,6 +136,7 @@ command `pip3` instead of `pip`.
 
         pip install pyusb
         pip install pillow
+        pip install flask
 
 #### Examples:
 
