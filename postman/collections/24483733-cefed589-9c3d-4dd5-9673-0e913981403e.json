@@ -188,7 +188,8 @@
 					"path": [
 						"display-text"
 					]
-				}
+				},
+				"description": "Do not use any special characters"
 			},
 			"response": [
 				{
