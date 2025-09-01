@@ -191,7 +191,8 @@
 					"path": [
 						"display-text"
 					]
-				}
+				},
+				"description": "Display text on LED badge"
 			},
 			"response": [
 				{
