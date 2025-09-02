@@ -67,7 +67,8 @@
 					"path": [
 						"predefined-icons"
 					]
-				}
+				},
+				"description": "## Get Predefined Icons\n\n### Purpose\nThis endpoint retrieves the COMPLETE and DEFINITIVE list of special characters/icons that can be used with the LED name badge.\n\n### ⚠️ CRITICAL USAGE REQUIREMENT ⚠️\nThis endpoint MUST be called BEFORE attempting to use any special characters in the `POST /display-text` endpoint.\n\n### Response Format\nReturns an array of strings, where each string is a supported special character or icon.\n\n### Implementation Notes\n- The response from this endpoint is the ONLY source of truth for valid special characters\n- ONLY these special characters, combined with standard alphanumeric characters (A-Z, a-z, 0-9), can be used in display text\n- Any attempt to use special characters not in this list will result in validation errors\n- This list may change over time, so always fetch the latest version before constructing display text\n\n### Example Usage Flow\n1. Call this endpoint to get the list of supported special characters\n2. Store or cache the response for reference\n3. Use ONLY these special characters when constructing text for the `POST /display-text` endpoint\n4. Implement validation to ensure no unsupported characters are used"
 			},
 			"response": [
 				{
