@@ -190,7 +190,7 @@
 						"display-text"
 					]
 				},
-				"description": "Do not use any special characters"
+				"description": "## Display Text on LED Badge\n\n### Purpose\nThis endpoint sends text to be displayed on the LED name badge.\n\n### ⚠️ CRITICAL CHARACTER RESTRICTION ⚠️\nThe text sent to this endpoint MUST ONLY contain:\n1. Standard alphanumeric characters (A-Z, a-z, 0-9)\n2. Special predefined icons retrieved from the `GET /predefined-icons` endpoint\n\n### Request Format\n- Method: POST\n- Body: JSON object with a \"text\" property containing the display text\n\n### Validation Rules\n- Text MUST NOT contain any special characters not returned by the `/predefined-icons` endpoint\n- Text MUST NOT contain emojis, Unicode symbols, or ASCII art not in the predefined icons list\n- Text MUST be validated before sending to ensure compliance with these restrictions\n\n### Implementation Sequence\n1. FIRST: Call `GET /predefined-icons` to get the complete list of allowed special characters\n2. THEN: Construct your display text using ONLY alphanumeric characters and icons from step 1\n3. FINALLY: Send the validated text to this endpoint\n\n### Error Handling\n- The API will reject requests containing unsupported characters\n- Validation failures may result in error responses or unpredictable display behavior\n\n### Example Usage\n```javascript\n// CORRECT IMPLEMENTATION:\n// 1. First get the allowed icons\nconst allowedIcons = await getFromEndpoint('/predefined-icons');\n// 2. Then validate your text contains only alphanumeric and allowed icons\nconst isValid = validateText(myText, allowedIcons);\n// 3. Only if valid, send to display endpoint\nif (isValid) {\n  await postToEndpoint('/display-text', { text: myText });\n}\n```"
 			},
 			"response": [
 				{
