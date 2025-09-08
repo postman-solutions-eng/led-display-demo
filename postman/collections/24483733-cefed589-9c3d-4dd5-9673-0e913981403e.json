@@ -67,7 +67,7 @@
 						"predefined-icons"
 					]
 				},
-				"description": "Show predefined icons"
+				"description": "Show predefined icons.\n\nIMPORTANT: Only the icons/characters returned by this endpoint are allowed for display on the LED badge. Special characters, Unicode, and emojis are NOT supported unless explicitly listed here. Use this endpoint to determine which characters are supported."
 			},
 			"response": [
 				{
