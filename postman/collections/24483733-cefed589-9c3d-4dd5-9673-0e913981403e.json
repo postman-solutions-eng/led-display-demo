@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "24483733-cefed589-9c3d-4dd5-9673-0e913981403e",
 		"name": "LED Name Badge API",
-		"description": "# LED Name Badge API\n\n## Overview\nThis API allows you to control an LED name badge display through two primary endpoints.\n\n## ⚠️ CRITICAL CHARACTER RESTRICTION ⚠️\n**ONLY two types of characters are supported by this API:**\n1. Standard alphanumeric characters (A-Z, a-z, 0-9)\n2. Special predefined icons that MUST be retrieved from the `GET /predefined-icons` endpoint\n\n## Character Usage Rules\n\n### ✅ ALLOWED:\n- Standard alphanumeric characters (A-Z, a-z, 0-9)\n- Special icons ONLY from the `/predefined-icons` endpoint response\n\n### ❌ STRICTLY PROHIBITED:\n- Any special characters, symbols, or emojis NOT in the predefined icons list\n- Unicode characters not explicitly returned by the `/predefined-icons` endpoint\n- Emojis or symbols not in the predefined icons list\n- ASCII art or other special character combinations\n\n## Consequences of Using Unsupported Characters\n- API will return validation errors\n- Display may show incorrect characters\n- Display may fail to show anything at all\n- Hardware may behave unpredictably\n\n## Required Implementation Sequence\n1. FIRST: Call `GET /predefined-icons` to retrieve the complete list of supported special icons\n2. THEN: Use ONLY characters from this list combined with alphanumeric characters\n3. FINALLY: Send validated text to `POST /display-text`\n\n## Available Endpoints\n\n### 1. `GET /predefined-icons`\n- **Purpose**: Retrieve the ONLY supported special icons/characters\n- **Usage**: MUST be called first before attempting to use any special characters\n- **Response**: Returns an array of all supported special characters/icons\n- **Importance**: Critical - this is the ONLY source of truth for valid special characters\n\n### 2. `POST /display-text`\n- **Purpose**: Send text to be displayed on the LED badge\n- **Strict Validation Required**: Text MUST ONLY contain:\n  - Standard alphanumeric characters (A-Z, a-z, 0-9)\n  - Special icons from the `/predefined-icons` response\n- **Error Handling**: Will reject requests with unsupported characters\n\n## Best Practices for Developers and AI Agents\n1. ALWAYS fetch the allowed icons using the `/predefined-icons` endpoint before constructing display text\n2. Validate ALL text to ensure it ONLY contains standard alphanumeric characters and/or icons from the `/predefined-icons` response\n3. NEVER attempt to use any special characters not explicitly returned by the `/predefined-icons` endpoint\n4. Implement character validation before sending requests to prevent errors\n\nThis restriction ensures compatibility with the hardware and prevents display errors.",
+		"description": "API for controlling the LED name badge\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed.\n\n**Important Usage Note for AI Agents and Clients:**\n\n- Only the special characters (icons) returned by the `GET /predefined-icons` endpoint are supported by this API.\n- Any other special characters, symbols, or emojis that are not part of the predefined icons list are NOT supported and must NOT be used in the text sent to the display.\n- Attempting to use unsupported special characters may result in errors or undefined behavior.\n- Always fetch the allowed icons using the `/predefined-icons` endpoint before constructing or sending display text.\n- Standard alphanumeric characters (A-Z, a-z, 0-9) are supported as usual.\n\n**Endpoints:**\n- `GET /predefined-icons`: Retrieve the list of supported special icons/characters.\n- `POST /display-text`: Send text (using only allowed characters and icons) to be displayed on the LED badge.\n\n**Best Practice:**\n- Validate your text to ensure it only contains standard alphanumeric characters and/or icons from the `/predefined-icons` response before sending it to the API.\n\nThis restriction ensures compatibility with the hardware and prevents display errors.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -224,23 +224,28 @@
 					"header": [
 						{
 							"key": "Server",
-							"value": "Werkzeug/3.1.3 Python/3.9.6"
+							"value": "Werkzeug/3.1.3 Python/3.9.6",
+							"enabled": true
 						},
 						{
 							"key": "Date",
-							"value": "Fri, 13 Jun 2025 15:57:34 GMT"
+							"value": "Fri, 13 Jun 2025 15:57:34 GMT",
+							"enabled": true
 						},
 						{
 							"key": "Content-Type",
-							"value": "application/json"
+							"value": "application/json",
+							"enabled": true
 						},
 						{
 							"key": "Content-Length",
-							"value": "157"
+							"value": "157",
+							"enabled": true
 						},
 						{
 							"key": "Connection",
-							"value": "close"
+							"value": "close",
+							"enabled": true
 						}
 					],
 					"cookie": [],
@@ -276,10 +281,8 @@
 	],
 	"variable": [
 		{
-			"id": "094d87e7-f220-4ea1-a046-f203b8f14b6d",
 			"key": "baseUrl",
-			"value": "https://a84a2672-11fd-41e3-8f81-5127bca46a38.mock.pstmn.io",
-			"type": "string"
+			"value": "https://a84a2672-11fd-41e3-8f81-5127bca46a38.mock.pstmn.io"
 		}
 	]
 }
