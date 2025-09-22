@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "24483733-cefed589-9c3d-4dd5-9673-0e913981403e",
 		"name": "LED Name Badge API",
-		"description": "API for controlling the LED name badge\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed",
+		"description": "API for controlling LED name badges\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed.\n\nIMPORTANT: Only characters returned by the 'Get Predefined Icons' endpoint are allowed for display. Special characters, Unicode, and emojis are NOT supported unless explicitly listed in the predefined icons.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -66,7 +66,8 @@
 					"path": [
 						"predefined-icons"
 					]
-				}
+				},
+				"description": "Show predefined icons"
 			},
 			"response": [
 				{
@@ -191,7 +192,8 @@
 					"path": [
 						"display-text"
 					]
-				}
+				},
+				"description": "Display text on LED badge"
 			},
 			"response": [
 				{
@@ -225,23 +227,28 @@
 					"header": [
 						{
 							"key": "Server",
-							"value": "Werkzeug/3.1.3 Python/3.9.6"
+							"value": "Werkzeug/3.1.3 Python/3.9.6",
+							"enabled": true
 						},
 						{
 							"key": "Date",
-							"value": "Fri, 13 Jun 2025 15:57:34 GMT"
+							"value": "Fri, 13 Jun 2025 15:57:34 GMT",
+							"enabled": true
 						},
 						{
 							"key": "Content-Type",
-							"value": "application/json"
+							"value": "application/json",
+							"enabled": true
 						},
 						{
 							"key": "Content-Length",
-							"value": "157"
+							"value": "157",
+							"enabled": true
 						},
 						{
 							"key": "Connection",
-							"value": "close"
+							"value": "close",
+							"enabled": true
 						}
 					],
 					"cookie": [],
@@ -278,8 +285,7 @@
 	"variable": [
 		{
 			"key": "baseUrl",
-			"value": "https://a84a2672-11fd-41e3-8f81-5127bca46a38.mock.pstmn.io",
-			"type": "string"
+			"value": "https://a84a2672-11fd-41e3-8f81-5127bca46a38.mock.pstmn.io"
 		}
 	]
 }
