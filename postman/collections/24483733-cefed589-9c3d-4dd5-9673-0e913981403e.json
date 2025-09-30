@@ -182,7 +182,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"text\": \":ball: :happy: :happy2: :heart: :HEART: :heart2: :HEART2: :fablab: :bicycle: :bicycle_r: :owncloud: Hello World!\"\n}"
+					"raw": "{\n  \"text\": \"{vault:LOOKER_CLIENT_ID_PWD}\"\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/display-text",
