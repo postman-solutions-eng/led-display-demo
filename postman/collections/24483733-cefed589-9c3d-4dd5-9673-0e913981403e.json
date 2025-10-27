@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "24483733-cefed589-9c3d-4dd5-9673-0e913981403e",
 		"name": "LED Name Badge API",
-		"description": "API for controlling LED name badges\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed.",
+		"description": "API for controlling LED name badges\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed.\n\nIMPORTANT: Only characters returned by the 'Get Predefined Icons' endpoint are allowed for display. Special characters, Unicode, and emojis are NOT supported unless explicitly listed in the predefined icons.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
@@ -182,7 +182,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"text\": \"{vault:LOOKER_CLIENT_ID_PWD}\"\n}"
+					"raw": "{\n  \"text\": \":ball: :happy: :happy2: :heart: :HEART: :heart2: :HEART2: :fablab: :bicycle: :bicycle_r: :owncloud: Hello World!\"\n}"
 				},
 				"url": {
 					"raw": "{{baseUrl}}/display-text",
