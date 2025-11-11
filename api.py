@@ -27,7 +27,7 @@ def get_predefined_icons():
 
 @app.route('/display-summary', methods=['POST'])
 def display_summary():
-    summary = "Open LED Badge: Free, hackable, and fun! :star: :heart:"
+    summary = "Open LED Badge - Free, hackable, and fun! :star: :heart:"
     creator = SimpleTextAndIcons()
     scene_bitmap = creator.bitmap(summary)
 
