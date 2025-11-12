@@ -25,13 +25,15 @@
               "pm.test(\"Successful POST request\", function () {",
               "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
               "});",
-              "",
+              "pm.test(\"Content-Type is present\", function () {",
+              "    pm.response.to.have.header(\"Content-Type\");",
+              "});",
               "pm.test(\"Response time is less than 200ms\", function () {",
               "    pm.expect(pm.response.responseTime).to.be.below(200);",
               "});",
               "",
               "pm.test(\"Body matches offline string\", function () {",
-              "    pm.expect(pm.response.text()).to.include(\"offline\");",
+              "    pm.expect(pm.response.text()).to.include(\"Postman is now ISO 27001 certified, works offline, has native file system based Git Integration and a DC in Europe\");",
               "});"
             ],
             "type": "text/javascript"
@@ -49,7 +51,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"text\": \"Hello World! :star:\"\n}",
+          "raw": "{\n  \"text\": \"Postman works offline now with ISO 27001 and native file system based Git Integration :star:\"\n}",
           "options": {
             "raw": {
               "language": "json"
