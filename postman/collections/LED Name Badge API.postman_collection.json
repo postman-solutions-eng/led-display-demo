@@ -1,0 +1,255 @@
+{
+  "info": {
+    "_postman_id": "e3d1536b-80d8-457e-bce6-891728ce9017",
+    "name": "LED Name Badge API",
+    "description": "# LED Name Badge API\n\nThis API controls an LED name badge display using Flask. It allows you to display custom text, retrieve available predefined icons, and show a summary message on the LED badge.\n\n## Base URL\n`http://localhost:5001`\n\n## Features\n- **Display Custom Text**: Send any text to be displayed on the LED badge\n- **Get Predefined Icons**: Retrieve a list of available icons that can be used in text (format: `:icon_name:`)\n- **Display Summary**: Show a predefined summary message on the LED badge\n\n## Usage Notes\n- The API uses the `lednamebadge` Python library to communicate with the LED badge hardware\n- Icons can be embedded in text using the format `:icon_name:` (e.g., `:star:`, `:heart:`)\n- All POST endpoints return status 200 on success\n- The LED badge must be connected to the system running the API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Display Text",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              ""
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Successful POST request\", function () {",
+              "    pm.expect(pm.response.code).to.be.oneOf([200, 202]);",
+              "});",
+              "",
+              "pm.test(\"Response time is less than 200ms\", function () {",
+              "    pm.expect(pm.response.responseTime).to.be.below(200);",
+              "});",
+              "",
+              "pm.test(\"Body matches offline string\", function () {",
+              "    pm.expect(pm.response.text()).to.include(\"offline\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"Hello World! :star:\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/display-text",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "display-text"
+          ]
+        },
+        "description": "Displays custom text on the LED name badge. You can include predefined icons in your text using the format `:icon_name:` (e.g., `:star:`, `:heart:`).\n\n### Request Body\n- `text` (string): The text to display on the LED badge. Can include icon placeholders.\n\n### Response\n- `status` (string): Confirmation message\n- `text` (string): The text that was displayed\n\n### Example\n```json\n{\n  \"text\": \"Hello World! :star:\"\n}\n```\n\n### Success Response (200)\n```json\n{\n  \"status\": \"Text displayed on LED\",\n  \"text\": \"Hello World! :star:\"\n}\n```"
+      },
+      "response": [
+        {
+          "name": "Success - Text Displayed",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"text\": \"Hello World! :star:\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/display-text",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "display-text"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "_postman_previewtype": "html",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": \"Text displayed on LED\",\n  \"text\": \"Hello World! :star:\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "Get Predefined Icons",
+      "request": {
+        "method": "GET",
+        "url": {
+          "raw": "http://localhost:5001/predefined-icons",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "predefined-icons"
+          ]
+        },
+        "description": "Retrieves a list of all available predefined icons that can be used in the LED badge text. Icons are returned in the format `:icon_name:` and can be embedded directly in the text parameter of the `/display-text` endpoint.\n\n### Response\n- `icons` (array): List of available icon names in the format `:icon_name:`\n\n### Success Response (200)\n```json\n{\n  \"icons\": [\n    \":star:\",\n    \":heart:\",\n    \":smile:\",\n    \":arrow:\"\n  ]\n}\n```\n\n### Usage\nUse the returned icon names in your text when calling the `/display-text` endpoint. For example:\n```json\n{\n  \"text\": \"Welcome :star: :heart:\"\n}\n```"
+      },
+      "response": [
+        {
+          "name": "Success - Icons List",
+          "originalRequest": {
+            "method": "GET",
+            "url": {
+              "raw": "http://localhost:5001/predefined-icons",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "predefined-icons"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "_postman_previewtype": "html",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"icons\": [\n    \":star:\",\n    \":heart:\",\n    \":smile:\",\n    \":music:\",\n    \":arrow:\"\n  ]\n}"
+        }
+      ]
+    },
+    {
+      "name": "Display Summary",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:5001/display-summary",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "5001",
+          "path": [
+            "display-summary"
+          ]
+        },
+        "description": "Displays a predefined summary message on the LED badge. This endpoint does not require any request body parameters.\n\n### Predefined Message\nThe summary displays: **\"Open LED Badge - Free, hackable, and fun! :star: :heart:\"**\n\n### Response\n- `status` (string): Confirmation message\n\n### Success Response (200)\n```json\n{\n  \"status\": \"Summary displayed on LED\"\n}\n```\n\n### Notes\n- No request body is required for this endpoint\n- The message is hardcoded in the API and includes star and heart icons"
+      },
+      "response": [
+        {
+          "name": "Success - Summary Displayed",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://localhost:5001/display-summary",
+              "protocol": "http",
+              "host": [
+                "localhost"
+              ],
+              "port": "5001",
+              "path": [
+                "display-summary"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "_postman_previewtype": "html",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"status\": \"Summary displayed on LED\"\n}"
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    }
+  ]
+}
