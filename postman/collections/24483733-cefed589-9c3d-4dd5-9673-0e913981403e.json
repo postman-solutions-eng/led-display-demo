@@ -2,7 +2,7 @@
 	"info": {
 		"_postman_id": "24483733-cefed589-9c3d-4dd5-9673-0e913981403e",
 		"name": "LED Name Badge API",
-		"description": "API for controlling LED name badges\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed.",
+		"description": "API for controlling LED name badges\n\nIncludes a GET method to retrieve predefined icons and a POST method to send the actual text to be displayed.\n\n## ⚠️ Important: Special Character Restrictions\n\n**CRITICAL:** Special characters are **strictly limited** to only those returned by the `Get Predefined Icons` endpoint. \n\n- **Always call the `Get Predefined Icons` endpoint first** to retrieve the list of available special characters/icons\n- Only use the icons returned by that endpoint in your display text\n- Using any other special characters will **not display correctly** on the LED badge\n- This is a critical constraint that AI agents and developers must understand and follow\n\n### Recommended Workflow:\n1. Call `GET /predefined-icons` to retrieve available icons\n2. Use only those icons when calling `POST /display-text`\n3. Any attempt to use special characters not in the predefined list will fail to render properly",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
