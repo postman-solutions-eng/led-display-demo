@@ -9,8 +9,14 @@ def display_text():
     data = request.get_json()
     text = data.get('text', '')
 
-    creator = SimpleTextAndIcons()
-    scene_bitmap = creator.bitmap(text)
+    try:
+        creator = SimpleTextAndIcons()
+        scene_bitmap = creator.bitmap(text)
+    except (KeyError, ValueError, FileNotFoundError, OSError) as e:
+        return {'error': 'Invalid display string format', 'details': str(e)}, 400
+    except Exception as e:
+        # Catch any other format-related errors
+        return {'error': 'Invalid display string format', 'details': str(e)}, 400
 
     buf = array('B')
     buf.extend(LedNameBadge.header([scene_bitmap[1]], [4], [0], [0], [0], 100))
