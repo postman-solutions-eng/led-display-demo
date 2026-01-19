@@ -3,7 +3,7 @@
     "id": "cfb4fe50-fe32-4905-9c31-0edf143b987e"
   },
   "entities": {
-    "collections": [],
+    "collections": ["../win/Barebones LED Display API.postman_collection.json"],
     "environments": [],
     "specs": [],
     "flows": [],
