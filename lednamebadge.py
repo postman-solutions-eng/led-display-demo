@@ -66,6 +66,7 @@ import argparse
 import os
 import re
 import sys
+import threading
 import time
 from array import array
 from datetime import datetime
@@ -421,6 +422,7 @@ class LedNameBadge:
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     )
     _have_pyhidapi = False
+    _device_lock = threading.Lock()  # Lock to serialize USB device access
 
     try:
         if sys.version_info[0] < 3:
@@ -546,48 +548,110 @@ or
             sys.exit(1)
 
         if LedNameBadge._have_pyhidapi:
-            dev_info = LedNameBadge.pyhidapi.hid_enumerate(0x0416, 0x5020)
-            # dev = pyhidapi.hid_open(0x0416, 0x5020)
-            if dev_info:
-                dev = LedNameBadge.pyhidapi.hid_open_path(dev_info[0].path)
-                print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
-                    dev_info[0].manufacturer_string, dev_info[0].product_string, dev_info[0].interface_number, dev_info[0].usage_page))
-            else:
-                print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-                print("Connect the led tag and run this tool as root.")
-                sys.exit(1)
-            for i in range(int(len(buf)/64)):
-                # sendbuf must contain "report ID" as first byte. "0" does the job here.
-                sendbuf=array('B',[0])
-                # Then, put the 64 payload bytes into the buffer
-                sendbuf.extend(buf[i*64:i*64+64])
-                LedNameBadge.pyhidapi.hid_write(dev, sendbuf)
-            LedNameBadge.pyhidapi.hid_close(dev)
+            # Use lock to serialize device access and prevent resource conflicts
+            with LedNameBadge._device_lock:
+                max_retries = 3
+                retry_delay = 0.1
+                last_exception = None
+                
+                for attempt in range(max_retries):
+                    dev = None
+                    try:
+                        # Re-enumerate device on each attempt to get fresh device info
+                        dev_info = LedNameBadge.pyhidapi.hid_enumerate(0x0416, 0x5020)
+                        if not dev_info:
+                            raise Exception("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+                        
+                        dev = LedNameBadge.pyhidapi.hid_open_path(dev_info[0].path)
+                        if dev is None:
+                            raise Exception("Failed to open device - returned None")
+                        print("using [%s %s] int=%d page=%s via pyHIDAPI" % (
+                            dev_info[0].manufacturer_string, dev_info[0].product_string, dev_info[0].interface_number, dev_info[0].usage_page))
+                        
+                        # Successfully opened, now write data
+                        for i in range(int(len(buf)/64)):
+                            # sendbuf must contain "report ID" as first byte. "0" does the job here.
+                            sendbuf=array('B',[0])
+                            # Then, put the 64 payload bytes into the buffer
+                            sendbuf.extend(buf[i*64:i*64+64])
+                            LedNameBadge.pyhidapi.hid_write(dev, sendbuf)
+                        
+                        # Success - break out of retry loop
+                        break
+                        
+                    except Exception as e:
+                        last_exception = e
+                        print("Attempt %d/%d failed: %s" % (attempt + 1, max_retries, str(e)))
+                        if attempt < max_retries - 1:
+                            time.sleep(retry_delay * (attempt + 1))  # Exponential backoff
+                    finally:
+                        # Always close the device, even if an exception occurred
+                        if dev is not None:
+                            try:
+                                LedNameBadge.pyhidapi.hid_close(dev)
+                                # Delay to ensure device is fully released before next access
+                                time.sleep(0.1)
+                            except Exception as close_err:
+                                print("Warning: Error closing device: %s" % str(close_err))
+                
+                # If we exhausted all retries, raise the last exception
+                if last_exception:
+                    if "No led tag" in str(last_exception):
+                        print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+                        print("Connect the led tag and run this tool as root.")
+                        sys.exit(1)
+                    raise last_exception
         else:
-            dev = LedNameBadge.usb.core.find(idVendor=0x0416, idProduct=0x5020)
-            if dev is None:
-                print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
-                print("Connect the led tag and run this tool as root.")
-                sys.exit(1)
-            try:
-                # win32: NotImplementedError: is_kernel_driver_active
-                if dev.is_kernel_driver_active(0):
-                    dev.detach_kernel_driver(0)
-            except:
-                pass
-            dev.set_configuration()
-            print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
-            endpoint = 1
-            i = 0
-            while i < int(len(buf) / 64):
-                time.sleep(0.1)
+            # Use lock to serialize device access and prevent resource conflicts
+            with LedNameBadge._device_lock:
+                # Find device fresh each time to avoid stale handles
+                dev = LedNameBadge.usb.core.find(idVendor=0x0416, idProduct=0x5020)
+                if dev is None:
+                    print("No led tag with vendorID 0x0416 and productID 0x5020 found.")
+                    print("Connect the led tag and run this tool as root.")
+                    sys.exit(1)
+                
                 try:
-                    dev.write(endpoint, buf[i * 64:i * 64 + 64])
-                    i += 1
-                except ValueError:
-                    if endpoint == 1:
-                        endpoint = 2
-                        i = 0
+                    # win32: NotImplementedError: is_kernel_driver_active
+                    if dev.is_kernel_driver_active(0):
+                        dev.detach_kernel_driver(0)
+                except:
+                    pass
+                
+                dev.set_configuration()
+                print("using [%s %s] bus=%d dev=%d" % (dev.manufacturer, dev.product, dev.bus, dev.address))
+                
+                endpoint = 1
+                i = 0
+                try:
+                    while i < int(len(buf) / 64):
+                        time.sleep(0.1)
+                        try:
+                            dev.write(endpoint, buf[i * 64:i * 64 + 64])
+                            i += 1
+                        except ValueError:
+                            if endpoint == 1:
+                                endpoint = 2
+                                i = 0
+                finally:
+                    # pyusb automatically claims interface on write, but doesn't always release it
+                    # Try to release via the device's context/backend
+                    try:
+                        # Try different ways to release the interface depending on pyusb version
+                        if hasattr(dev, '_ctx'):
+                            # Newer pyusb versions use _ctx
+                            if hasattr(dev._ctx, 'release_interface'):
+                                dev._ctx.release_interface(dev, 0)
+                            elif hasattr(dev._ctx, 'managed_release_interface'):
+                                dev._ctx.managed_release_interface(dev, 0)
+                        # Try to close the device handle explicitly
+                        if hasattr(dev, 'close'):
+                            dev.close()
+                    except Exception as e:
+                        # Ignore errors - finding device fresh each time should help avoid stale handles
+                        pass
+                    # Longer delay to ensure interface is fully released before next access
+                    time.sleep(0.2)
 
 def split_to_ints(list_str):
     return [int(x) for x in re.split(r'[\s,]+', list_str)]
