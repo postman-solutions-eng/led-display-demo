@@ -1,3 +1,12 @@
+# Prompts
+
+## SpecHub specific
+
+The spec and the Postman collection both seem very incomplete, not containing all possible icons and other character restrictions. Can you scan the backend API code to find out what additional endpoints and capabilities regarding icons and character restrictions there are and update the spec accordingly?
+
+
+## MCP specific
+
 Can you provide a fancy greeting with the current weather in SF to the LED?
 
 Can you provide a less fancy greeting with the current weather in SF to the LED that does not contain any special characters?
