@@ -1,29 +1,10 @@
 #!/usr/bin/env python3
 """
-LED Name Badge Mock Server with GUI Display
-
-A Python application that simulates an LED name badge display with a visual GUI
-and provides a Flask HTTP server that accepts the same API endpoints as the
-LED Name Badge API collection.
-
-API Endpoints:
-- POST /display-text - Update badge display text
-- GET /predefined-icons - Retrieve available icon library
-- POST /display-summary - Display the demo summary text
-
-Author: Generated for LED Name Badge API testing
+LED Name Badge Mock GUI Display
 """
 
 import tkinter as tk
-from tkinter import ttk
-import threading
-import time
-import json
-import re
-from flask import Flask, request, jsonify
-from flask_cors import CORS
 import queue
-import math
 from lednamebadge import SimpleTextAndIcons
 
 # Global creator to reuse SimpleTextAndIcons for bitmap generation
@@ -77,7 +58,7 @@ class TextRenderer:
         return rows
 
 
-# Simple holder for display state shared between Flask and GUI
+# Simple holder for display state used by the GUI
 class DisplayState:
     def __init__(self):
         self.text = ""
@@ -193,19 +174,6 @@ class LEDDisplayGUI:
         self.control_frame = tk.Frame(self.main_frame, bg='#1a1a1a')
         self.control_frame.pack(pady=10, fill=tk.X)
         
-        # Server status
-        self.server_status = tk.StringVar(value="Server: Starting...")
-        server_label = tk.Label(
-            self.control_frame,
-            textvariable=self.server_status,
-            font=('Courier', 10),
-            fg='#ffaa00',
-            bg='#1a1a1a'
-        )
-        server_label.pack(side=tk.RIGHT, padx=10)
-
-        # No color selector: api.py does not support color changes (fixed red)
-        
         # Start animation loop
         self.animation_running = True
         self._animate()
@@ -302,13 +270,6 @@ class LEDDisplayGUI:
                     
                     self._update_display()
                 
-                elif command['type'] == 'clear':
-                    self.display_state.clear()
-                    self._update_display()
-                
-                elif command['type'] == 'server_status':
-                    self.server_status.set(command['status'])
-                
         except queue.Empty:
             pass
         
@@ -321,227 +282,30 @@ class LEDDisplayGUI:
 
 
 # ============================================
-# Flask API Server
-# ============================================
-
-def create_flask_app(display_state, command_queue):
-    """Create and configure Flask application"""
-    
-    app = Flask(__name__)
-    CORS(app)
-    # Use the real creator for icon names and supported characters
-    creator = SimpleTextAndIcons()
-    BUILTIN_ICON_NAMES = set(creator.bitmap_named.keys())
-    SUPPORTED_CHARS = set(creator.charmap)
-    
-    def _validate_display_string(text):
-        """Validate a display string similar to SimpleTextAndIcons.bitmap()
-        Raises KeyError, ValueError, FileNotFoundError or OSError on invalid input.
-        """
-        if not isinstance(text, str):
-            raise ValueError("Display text must be a string")
-
-        # Allow escape :: -> : so treat empty name specially
-        tokens = re.findall(r':([^:]*):', text)
-        for name in tokens:
-            if name == '':
-                continue
-            if re.match(r'^[0-9]+$', name):
-                continue
-            if '.' in name:
-                # image path -> must exist
-                import os
-                if not os.path.exists(name):
-                    raise FileNotFoundError(f"Image file not found: {name}")
-                continue
-            # builtin icons come from SimpleTextAndIcons.bitmap_named
-            if name not in BUILTIN_ICON_NAMES:
-                raise KeyError(f"Unknown builtin icon: {name}")
-
-        # Validate remaining characters (remove tokens first)
-        text_no_tokens = re.sub(r':[^:]*:', '', text)
-        for ch in text_no_tokens:
-            if ch == '\n' or ch == '\r':
-                continue
-            if ch not in SUPPORTED_CHARS:
-                raise KeyError(f"Unsupported character: {ch}")
-
-    @app.route('/display-text', methods=['POST'])
-    def update_display():
-        """Mimic `api.py` POST /display-text behavior and responses."""
-        try:
-            data = request.get_json()
-            if not data or 'text' not in data:
-                return {'error': "Invalid display string format", 'details': "Missing 'text' field"}, 400
-
-            text = data.get('text', '')
-
-            # Validate using local validator to avoid importing hardware module
-            try:
-                _validate_display_string(text)
-            except (KeyError, ValueError, FileNotFoundError, OSError) as e:
-                return {'error': 'Invalid display string format', 'details': str(e)}, 400
-
-            # API parity: `api.py` only accepts `text`. Enforce defaults for other settings.
-            update_data = {
-                'text': text,
-                'mode': 'left',
-                'speed': 4,
-                'brightness': 100,
-                'color': 'red'
-            }
-
-            command_queue.put({'type': 'update', 'data': update_data})
-
-            # update internal state with enforced defaults
-            display_state.text = text
-            display_state.mode = 'left'
-            display_state.speed = 4
-            display_state.brightness = 100
-            display_state.color = 'red'
-
-            return {'status': 'Text displayed on LED', 'text': text}, 200
-
-        except Exception as e:
-            return {'error': 'Invalid display string format', 'details': str(e)}, 400
-    
-    @app.route('/predefined-icons', methods=['GET'])
-    def get_icons():
-        """Return icon names in the same format as `api.py` (eg. ':heart:')"""
-        try:
-            icons = []
-            for k in creator.bitmap_named.keys():
-                icons.append(f':{k}:')
-            return {'icons': icons}, 200
-        except Exception as e:
-            return {'status': 'error', 'message': f'Failed to retrieve icon library: {str(e)}'}, 500
-
-    @app.route('/display-summary', methods=['POST'])
-    def display_summary():
-        """Mimic `api.py` POST /display-summary endpoint."""
-        try:
-            summary = "Open LED Badge - Free, hackable, and fun! :star: :heart:"
-
-            try:
-                _validate_display_string(summary)
-            except (KeyError, ValueError, FileNotFoundError, OSError) as e:
-                return {'error': 'Invalid display string format', 'details': str(e)}, 400
-
-            command_queue.put({'type': 'update', 'data': {'text': summary, 'mode': 'left', 'speed': 4}})
-            display_state.text = summary
-            display_state.mode = 'left'
-            display_state.speed = 4
-            return {'status': 'Summary displayed on LED'}, 200
-        except Exception as e:
-            return {'error': 'Invalid display string format', 'details': str(e)}, 400
-    
-    # Mock exposes only the same endpoints as api.py: /display-text, /predefined-icons, /display-summary
-    
-    @app.errorhandler(404)
-    def not_found(e):
-        return jsonify({
-            "status": "error",
-            "message": "Endpoint not found"
-        }), 404
-    
-    @app.errorhandler(405)
-    def method_not_allowed(e):
-        return jsonify({
-            "status": "error",
-            "message": "Method not allowed"
-        }), 405
-    
-    @app.errorhandler(500)
-    def internal_error(e):
-        return jsonify({
-            "status": "error",
-            "message": "Internal server error"
-        }), 500
-    
-    return app
-
-
-def run_flask_server(app, command_queue, host='0.0.0.0', port=5000):
-    """Run Flask server in a separate thread"""
-    import logging
-    log = logging.getLogger('werkzeug')
-    log.setLevel(logging.ERROR)
-    
-    # Notify GUI that server is starting
-    command_queue.put({
-        'type': 'server_status',
-        'status': f'Server: Running on http://{host}:{port}'
-    })
-    
-    app.run(host=host, port=port, threaded=True, use_reloader=False)
-
-
-# ============================================
 # Main Application
 # ============================================
 
-def main():
-    """Main entry point"""
-    import argparse
-    
-    parser = argparse.ArgumentParser(description='LED Name Badge Mock Server with GUI')
-    parser.add_argument('--host', default='0.0.0.0', help='Server host (default: 0.0.0.0)')
-    parser.add_argument('--port', type=int, default=5000, help='Server port (default: 5000)')
-    args = parser.parse_args()
-    
-    # Create shared state and command queue
-    display_state = DisplayState()
-    command_queue = queue.Queue()
-    
-    # Create Flask app
-    flask_app = create_flask_app(display_state, command_queue)
-    
-    # Start Flask server in background thread
-    server_thread = threading.Thread(
-        target=run_flask_server,
-        args=(flask_app, command_queue, args.host, args.port),
-        daemon=True
-    )
-    server_thread.start()
-    
-    # Create and run Tkinter GUI
+def run_gui(display_state=None, command_queue=None):
+    """Run the Tkinter GUI. If `display_state` or `command_queue` are not
+    provided, new ones will be created. This function blocks (runs the
+    Tk mainloop) and is intended to be called as the primary process when a
+    GUI is desired."""
+    if display_state is None:
+        display_state = DisplayState()
+    if command_queue is None:
+        command_queue = queue.Queue()
+
     root = tk.Tk()
     gui = LEDDisplayGUI(root, display_state, command_queue)
-    
+
     # Set initial demo text (API only updates `text`)
-    command_queue.put({
-        'type': 'update',
-        'data': {
-            'text': 'LED Badge API Ready!'
-        }
-    })
-    
+    command_queue.put({'type': 'update', 'data': {'text': 'LED Badge API Ready!'}})
+
     def on_closing():
         gui.stop()
         root.destroy()
-    
+
     root.protocol("WM_DELETE_WINDOW", on_closing)
-    
-    print(f"""
-╔══════════════════════════════════════════════════════════════╗
-║           LED Name Badge Mock Server with GUI                ║
-╠══════════════════════════════════════════════════════════════╣
-║  Server running at: http://{args.host}:{args.port:<24}║
-║                                                              ║
-║  API Endpoints:                                              ║
-║    POST /display-text     - Update display text              ║
-║    GET  /predefined-icons - Get available icons              ║
-║    POST /display-summary  - Display demo summary text        ║
-║                                                              ║
-║  Example:                                                    ║
-║    curl -X POST http://localhost:{args.port}/display-text \\    ║
-║      -H "Content-Type: application/json" \\                   ║
-║      -d '{{"text": "Hello World!"}}'                          ║
-╚══════════════════════════════════════════════════════════════╝
-""")
-    
+
+    print('LED Name Badge GUI running')
     root.mainloop()
-
-
-if __name__ == '__main__':
-    main()
