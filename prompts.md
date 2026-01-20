@@ -8,6 +8,10 @@ Can you create a mock server and environment for this collection?
 
 Can you create a new collection and data file that mixes allowed messages with allowed icons and invalid messages and test whether the expected results occur?
 
+## Mock specific
+
+can you add two examples to the data file @"data-file.csv" - one succeeding and one failing, that is greeting company SAP with valid characters on the LED and once with invalid ones - also add the samples to our mock server in @"Mock Answers LED Display API"
+
 ## MCP specific
 
 Can you provide a fancy greeting with the current weather in SF to the LED?
