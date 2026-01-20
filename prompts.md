@@ -4,6 +4,9 @@
 
 The spec and the Postman collection both seem very incomplete, not containing all possible icons and other character restrictions. Can you scan the backend API code to find out what additional endpoints and capabilities regarding icons and character restrictions there are and update the spec accordingly?
 
+Can you create a mock server and environment for this collection?
+
+Can you create a new collection and data file that mixes allowed messages with allowed icons and invalid messages and test whether the expected results occur?
 
 ## MCP specific
 
