@@ -443,6 +443,42 @@ LedNameBadge.write(buf)
 
 ## Development
 
+## API
+
+This project exposes a small HTTP API used to send text to the LED badge (or to the mock GUI).
+
+- POST `/display-text`
+    - Content-Type: `application/json`
+    - Body: `{"text": "..."}`
+    - Success: `200` with `{"status": "Text displayed on LED", "text": "..."}`
+    - Error: `400` with `{"error": "Invalid display string format", "details": "..."}`
+
+- GET `/predefined-icons`
+    - Returns the list of builtin icon names in the format `[:name:]`.
+    - Success: `200` with `{"icons": [":heart:", ":star:", ...]}`
+
+- POST `/display-summary`
+    - Displays the demo summary text used by the project.
+    - Success: `200` with `{"status": "Summary displayed on LED"}`
+
+Notes:
+- The API accepts only the `text` payload for display updates; other display settings (mode, speed, color, brightness) are controlled by the server and the real device. The mock enforces the same defaults used by the API: `mode=left`, `speed=4`, `color=red`.
+- Server CLI options (in `api.py`):
+    - `python3 api.py` — run the API and write to the real device (default).
+    - `python3 api.py --mock` — run the API and show the mock GUI (no hardware writes).
+    - `python3 api.py --both` — write to hardware and also update the mock GUI.
+
+Example:
+
+```bash
+curl -X POST http://localhost:5001/display-text \
+    -H "Content-Type: application/json" \
+    -d '{"text":"Hello :star:"}'
+
+curl http://localhost:5001/predefined-icons
+```
+
+
 ### Generating Plantuml graphics
 
 You will need PlantUML and potentially GraphViz dot to generate the diagrams from the *.puml files.
