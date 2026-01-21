@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-LED Name Badge Mock GUI Display
+LED Name Badge Mock Console Display
 """
 
 import re
@@ -61,7 +61,7 @@ class TextRenderer:
         return rows
 
 
-# Simple holder for display state used by the GUI
+# Simple holder for display state used by the console renderer
 class DisplayState:
     def __init__(self):
         self.text = ""
@@ -83,14 +83,11 @@ class DisplayState:
 
 
 # ============================================
-# LED Display GUI
+# LED Display Console Renderer
 # ============================================
-
-    
 class ConsoleDisplay:
     """Console-based LED display renderer. Renders the 11x44 matrix to the
-    terminal using ANSI colors and simple characters. This is intentionally
-    compact and suitable for running in environments without a GUI.
+    terminal using ANSI colors and simple characters.
     """
 
     ON_CHAR = '\u25CF'  # ●
@@ -103,10 +100,7 @@ class ConsoleDisplay:
         self._stop = threading.Event()
 
     def _clear_screen(self):
-        # Clear screen and move cursor home (do NOT change the terminal's
-        # global background color here; the LED panel will set its own
-        # black background per-cell so the rest of the terminal remains
-        # untouched).
+        # Clear screen and move cursor home.
         sys.stdout.write('\033[2J\033[H')
 
     def _render(self):
@@ -201,8 +195,8 @@ class ConsoleDisplay:
         self._stop.set()
 
 
-def run_gui(display_state=None, command_queue=None):
-    """Run the console-based mock GUI. This blocks until stopped.
+def run_mock(display_state=None, command_queue=None):
+    """Run the console-based mock. This blocks until stopped.
 
     If `display_state` or `command_queue` are omitted, new ones are created.
     """

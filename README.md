@@ -445,7 +445,7 @@ LedNameBadge.write(buf)
 
 ## API
 
-This project exposes a small HTTP API used to send text to the LED badge (or to the mock GUI).
+This project exposes a small HTTP API used to send text to the LED badge (or to the mock console output).
 
 - POST `/display-text`
     - Content-Type: `application/json`
@@ -465,8 +465,8 @@ Notes:
 - The API accepts only the `text` payload for display updates; other display settings (mode, speed, color, brightness) are controlled by the server and the real device. The mock enforces the same defaults used by the API: `mode=left`, `speed=4`, `color=red`.
 - Server CLI options (in `api.py`):
     - `python3 api.py` — run the API and write to the real device (default).
-    - `python3 api.py --mock` — run the API and show the mock GUI (no hardware writes).
-    - `python3 api.py --both` — write to hardware and also update the mock GUI.
+    - `python3 api.py --mock` — run the API and show the mock console output (no hardware writes).
+    - `python3 api.py --both` — write to hardware and also update the mock console output.
 
 Example:
 
