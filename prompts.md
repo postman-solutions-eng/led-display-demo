@@ -10,7 +10,13 @@ Can you create a new collection and data file that mixes allowed messages with a
 
 ## Mock specific
 
-can you add two examples to the data file @"data-file.csv" - one succeeding and one failing, that is greeting company SAP with valid characters on the LED and once with invalid ones - also add the samples to our mock server in @"Mock Answers LED Display API"
+Can you create a new collection and data file that mixes allowed messages with allowed icons and invalid messages and test whether the expected results occur?
+
+Can you add two examples to the data file @"data-file.csv" - one succeeding and one failing, that is greeting company Uber with valid characters on the LED and once with invalid ones - also add the samples to our mock server in @"Mock Answers LED Display API"
+
+## Request Chaining example
+
+Can you create a new collection called "Request Chaining example" that first gets the predefined icons in its first request, then save those to a collection variable and then use that collection variable in the subsequent request to display three random icons from the first request on the LED? Use the @"Final LED Display API" as reference collection for the needed requests
 
 ## MCP specific
 
