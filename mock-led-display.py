@@ -3,8 +3,11 @@
 LED Name Badge Mock GUI Display
 """
 
-import tkinter as tk
+import re
 import queue
+import time
+import sys
+import threading
 from lednamebadge import SimpleTextAndIcons
 
 # Global creator to reuse SimpleTextAndIcons for bitmap generation
@@ -83,229 +86,133 @@ class DisplayState:
 # LED Display GUI
 # ============================================
 
-class LEDDisplayGUI:
-    """Tkinter GUI for LED display visualization"""
     
-    def __init__(self, root, display_state, command_queue):
-        self.root = root
+class ConsoleDisplay:
+    """Console-based LED display renderer. Renders the 11x44 matrix to the
+    terminal using ANSI colors and simple characters. This is intentionally
+    compact and suitable for running in environments without a GUI.
+    """
+
+    ON_CHAR = '\u25CF'  # ●
+    OFF_CHAR = '\u25CB'  # ○
+
+    def __init__(self, display_state, command_queue, refresh_ms=ANIMATION_DELAY_MS):
         self.display_state = display_state
         self.command_queue = command_queue
-        
-        self.root.title("LED Name Badge Simulator")
-        self.root.configure(bg='#1a1a1a')
-        self.root.resizable(True, True)
-        
-        # Create main frame
-        self.main_frame = tk.Frame(root, bg='#1a1a1a')
-        self.main_frame.pack(padx=20, pady=20, fill=tk.BOTH, expand=True)
-        
-        # Title
-        title_label = tk.Label(
-            self.main_frame, 
-            text="LED Name Badge Simulator",
-            font=('Helvetica', 16, 'bold'),
-            fg='#ffffff',
-            bg='#1a1a1a'
-        )
-        title_label.pack(pady=(0, 10))
-        
-        # LED Display Frame (badge-like appearance)
-        self.display_frame = tk.Frame(
-            self.main_frame,
-            bg='#0a0a0a',
-            relief=tk.RAISED,
-            bd=3
-        )
-        self.display_frame.pack(pady=10)
-        
-        # Inner bezel
-        self.bezel_frame = tk.Frame(
-            self.display_frame,
-            bg='#333333',
-            padx=8,
-            pady=8
-        )
-        self.bezel_frame.pack(padx=4, pady=4)
-        
-        # Canvas for LED matrix
-        canvas_width = LED_COLS * (LED_SIZE + LED_SPACING) + LED_SPACING
-        canvas_height = LED_ROWS * (LED_SIZE + LED_SPACING) + LED_SPACING
-        
-        self.canvas = tk.Canvas(
-            self.bezel_frame,
-            width=canvas_width,
-            height=canvas_height,
-            bg='#0a0a0a',
-            highlightthickness=0
-        )
-        self.canvas.pack()
-        
-        # Create LED pixels
-        self.leds = []
+        self.refresh = refresh_ms / 1000.0
+        self._stop = threading.Event()
+
+    def _clear_screen(self):
+        # Clear screen and move cursor home (do NOT change the terminal's
+        # global background color here; the LED panel will set its own
+        # black background per-cell so the rest of the terminal remains
+        # untouched).
+        sys.stdout.write('\033[2J\033[H')
+
+    def _render(self):
+        """Render the current display_state to the terminal."""
+        # Header
+        self._clear_screen()
+        print('LED Name Badge (mock) — console renderer')
+        display_text = (self.display_state.text[:60] + '...') if len(self.display_state.text) > 60 else self.display_state.text
+        print(f'Text: {display_text or "(none)"}\n')
+
+        # Colors: use a black background only for LED cells and RGB
+        # foreground colors for ON (bright red) and OFF (dim red).
+        BG_BLACK = '\033[48;2;0;0;0m'
+        ON = BG_BLACK + '\033[38;2;255;0;0m'   # red on black
+        OFF = BG_BLACK + '\033[38;2;102;0;0m'  # dim red on black
+        RESET = '\033[0m'
+
+        text_bitmap = self.display_state.text_bitmap
+        scroll_pos = self.display_state.scroll_position
+        mode = self.display_state.mode
+
         for row in range(LED_ROWS):
-            led_row = []
+            line = []
             for col in range(LED_COLS):
-                x = LED_SPACING + col * (LED_SIZE + LED_SPACING)
-                y = LED_SPACING + row * (LED_SIZE + LED_SPACING)
-                led = self.canvas.create_oval(
-                    x, y, x + LED_SIZE, y + LED_SIZE,
-                    fill=LED_COLORS['red']['off'],
-                    outline=''
-                )
-                led_row.append(led)
-            self.leds.append(led_row)
-        
-        # Status Frame
-        self.status_frame = tk.Frame(self.main_frame, bg='#1a1a1a')
-        self.status_frame.pack(pady=10, fill=tk.X)
-        
-        # Status label (only show current text; api.py only updates text)
-        self.status_text = tk.StringVar(value="Text: (none)")
-        status_label = tk.Label(
-            self.status_frame,
-            textvariable=self.status_text,
-            font=('Courier', 10),
-            fg='#00ff00',
-            bg='#1a1a1a'
-        )
-        status_label.pack(anchor=tk.W)
-        
-        # Control Frame
-        self.control_frame = tk.Frame(self.main_frame, bg='#1a1a1a')
-        self.control_frame.pack(pady=10, fill=tk.X)
-        
-        # Start animation loop
-        self.animation_running = True
-        self._animate()
-        
-        # Process command queue
-        self._process_commands()
-    
-    def _animate(self):
-        """Animation loop for scrolling text"""
-        if not self.animation_running:
-            return
-        
-        if self.display_state.is_running and self.display_state.text:
-            # Simplified: always scroll left (API enforces left mode)
-            self.display_state.scroll_position += 1
-            if self.display_state.scroll_position > self.display_state.text_width + LED_COLS:
-                self.display_state.scroll_position = 0
-            self._update_display()
-        
-        # Schedule next animation frame (fixed delay to match speed 4)
-        self.root.after(ANIMATION_DELAY_MS, self._animate)
-    
-    def _update_display(self):
-        """Update the LED display based on current state"""
-        color = self.display_state.color
-        brightness = self.display_state.brightness / 100.0
-        
-        # Get color values
-        colors = LED_COLORS.get(color, LED_COLORS['red'])
-        on_color = colors['on']
-        dim_color = colors['dim']
-        off_color = colors['off']
-        
-        # Adjust for brightness
-        if brightness < 0.5:
-            on_color = dim_color
-        
-        # Clear or render based on state
-        if not self.display_state.text:
-            # All LEDs off
-            for row in range(LED_ROWS):
-                for col in range(LED_COLS):
-                    self.canvas.itemconfig(self.leds[row][col], fill=off_color)
-        else:
-            # Render text bitmap (support only 'static' centered and left-scrolling)
-            text_bitmap = self.display_state.text_bitmap
-            scroll_pos = self.display_state.scroll_position
-            mode = self.display_state.mode
-
-            for row in range(LED_ROWS):
-                for col in range(LED_COLS):
+                if not text_bitmap:
                     pixel_on = False
-
+                else:
                     if mode == 'static':
-                        # Center text
                         text_col = col - (LED_COLS - self.display_state.text_width) // 2
-                        if row < len(text_bitmap) and 0 <= text_col < len(text_bitmap[row]):
-                            pixel_on = text_bitmap[row][text_col] == 1
                     else:
-                        # Default: left scroll
                         text_col = col + scroll_pos - LED_COLS
-                        if row < len(text_bitmap) and 0 <= text_col < len(text_bitmap[row]):
-                            pixel_on = text_bitmap[row][text_col] == 1
 
-                    fill_color = on_color if pixel_on else off_color
-                    self.canvas.itemconfig(self.leds[row][col], fill=fill_color)
-        
-        # Update status labels
-        display_text = self.display_state.text[:30] + "..." if len(self.display_state.text) > 30 else self.display_state.text
-        self.status_text.set(f"Text: {display_text or '(none)'}")
-        # Only display text in status; other settings are fixed by the API
-    
+                    if 0 <= row < len(text_bitmap) and 0 <= text_col < len(text_bitmap[row]):
+                        pixel_on = text_bitmap[row][text_col] == 1
+                    else:
+                        pixel_on = False
+
+                if pixel_on:
+                    line.append(f'{ON}{self.ON_CHAR}')
+                else:
+                    line.append(f'{OFF}{self.OFF_CHAR}')
+            print(''.join(line))
+        # Reset colors (restores user's terminal background)
+        print(RESET + '\n')
+
     def _process_commands(self):
-        """Process commands from the API server"""
+        changed = False
         try:
             while True:
                 command = self.command_queue.get_nowait()
-                
                 if command['type'] == 'update':
                     data = command['data']
-                    
-                    # Only 'text' is accepted from api.py; enforce defaults for other settings
                     if 'text' in data:
                         self.display_state.text = data['text']
                         self.display_state.text_bitmap = TextRenderer.render_text(data['text'])
                         self.display_state.text_width = len(self.display_state.text_bitmap[0]) if self.display_state.text_bitmap else 0
                         self.display_state.scroll_position = 0
                         self.display_state.is_running = True
-                        # enforce api.py fixed settings
                         self.display_state.mode = 'left'
                         self.display_state.speed = 4
                         self.display_state.brightness = 100
                         self.display_state.color = 'red'
-                    
-                    self._update_display()
-                
+                        changed = True
+                elif command['type'] == 'clear':
+                    self.display_state.clear()
+                    changed = True
         except queue.Empty:
             pass
-        
-        # Schedule next check
-        self.root.after(50, self._process_commands)
-    
+        return changed
+
+    def run(self):
+        try:
+            while not self._stop.is_set():
+                # process commands
+                changed = self._process_commands()
+
+                # advance scroll if running
+                if self.display_state.is_running and self.display_state.text:
+                    self.display_state.scroll_position += 1
+                    if self.display_state.scroll_position > self.display_state.text_width + LED_COLS:
+                        self.display_state.scroll_position = 0
+                    changed = True
+
+                if changed:
+                    self._render()
+
+                time.sleep(self.refresh)
+        except KeyboardInterrupt:
+            pass
+
     def stop(self):
-        """Stop the animation loop"""
-        self.animation_running = False
+        self._stop.set()
 
-
-# ============================================
-# Main Application
-# ============================================
 
 def run_gui(display_state=None, command_queue=None):
-    """Run the Tkinter GUI. If `display_state` or `command_queue` are not
-    provided, new ones will be created. This function blocks (runs the
-    Tk mainloop) and is intended to be called as the primary process when a
-    GUI is desired."""
+    """Run the console-based mock GUI. This blocks until stopped.
+
+    If `display_state` or `command_queue` are omitted, new ones are created.
+    """
     if display_state is None:
         display_state = DisplayState()
     if command_queue is None:
         command_queue = queue.Queue()
 
-    root = tk.Tk()
-    gui = LEDDisplayGUI(root, display_state, command_queue)
-
-    # Set initial demo text (API only updates `text`)
-    command_queue.put({'type': 'update', 'data': {'text': 'LED Badge API Ready!'}})
-
-    def on_closing():
-        gui.stop()
-        root.destroy()
-
-    root.protocol("WM_DELETE_WINDOW", on_closing)
-
-    print('LED Name Badge GUI running')
-    root.mainloop()
+    console = ConsoleDisplay(display_state, command_queue)
+    try:
+        console.run()
+    except KeyboardInterrupt:
+        console.stop()
