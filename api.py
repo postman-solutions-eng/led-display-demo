@@ -13,7 +13,7 @@ app = Flask(__name__)
 
 def _process_and_write(text, command_queue=None, write_hardware=True):
     """Create the scene buffer for `text` and either write to hardware,
-    post to the mock GUI via `command_queue`, or both depending on flags.
+    post to the mock console output via `command_queue`, or both depending on flags.
     """
     creator = SimpleTextAndIcons()
     scene_bitmap = creator.bitmap(text)
@@ -22,13 +22,9 @@ def _process_and_write(text, command_queue=None, write_hardware=True):
     buf.extend(LedNameBadge.header([scene_bitmap[1]], [4], [0], [0], [0], 100))
     buf.extend(scene_bitmap[0])
 
-    # Debug: report what we're about to do
-    print(f"_process_and_write: write_hardware={write_hardware}, command_queue_set={command_queue is not None}, text='{text[:50]}'")
-
     if write_hardware:
         try:
             LedNameBadge.write(buf)
-            print("_process_and_write: wrote to hardware")
         except Exception as e:
             print(f"_process_and_write: hardware write failed: {e}")
 
@@ -36,7 +32,6 @@ def _process_and_write(text, command_queue=None, write_hardware=True):
         # API mock expects only `text` updates
         try:
             command_queue.put({'type': 'update', 'data': {'text': text}})
-            print("_process_and_write: enqueued update to mock GUI")
         except Exception as e:
             print(f"_process_and_write: enqueue failed: {e}")
 
@@ -56,7 +51,7 @@ def display_text():
         return {'error': 'Invalid display string format', 'details': str(e)}, 400
 
     # On actual run, the main program will decide whether to write to
-    # hardware and/or the mock GUI by providing globals.
+    # hardware and/or the mock console by providing globals.
     global _API_COMMAND_QUEUE, _API_WRITE_HARDWARE
     _process_and_write(text, command_queue=globals().get('_API_COMMAND_QUEUE'), write_hardware=globals().get('_API_WRITE_HARDWARE', True))
 
@@ -86,15 +81,15 @@ def display_summary():
     return {'status': 'Summary displayed on LED'}, 200
 
 
-def _load_mock_gui_module():
-    """Dynamically load `mock-led-display.py` as module `mock_gui`.
+def _load_mock_console_module():
+    """Dynamically load `mock-led-display.py` as module `mock_console`.
     This avoids Python import issues with hyphens in the filename.
     """
     base = os.path.dirname(os.path.abspath(__file__))
     path = os.path.join(base, 'mock-led-display.py')
     if not os.path.exists(path):
         raise FileNotFoundError(path)
-    spec = importlib.util.spec_from_file_location('mock_gui', path)
+    spec = importlib.util.spec_from_file_location('mock_console', path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -104,8 +99,8 @@ def main():
     parser = argparse.ArgumentParser(description='LED Name Badge API server')
     parser.add_argument('--host', default='0.0.0.0')
     parser.add_argument('--port', type=int, default=5001)
-    parser.add_argument('--mock', action='store_true', help='Run with mock GUI instead of writing to hardware')
-    parser.add_argument('--both', action='store_true', help='Write to hardware and also show mock GUI')
+    parser.add_argument('--mock', action='store_true', help='Run with mock console instead of writing to hardware')
+    parser.add_argument('--both', action='store_true', help='Write to hardware and also show mock console')
     args = parser.parse_args()
 
     # Decide behavior
@@ -113,12 +108,12 @@ def main():
     write_hardware = not args.mock
 
     if use_mock:
-        # Prepare shared state and command queue for the GUI
+        # Prepare shared state and command queue for the console mock
         cmd_q = queue.Queue()
         globals()['_API_COMMAND_QUEUE'] = cmd_q
         globals()['_API_WRITE_HARDWARE'] = args.both
 
-        # Start Flask server in background thread, then run GUI in foreground
+        # Start Flask server in background thread, then run console in foreground
         server_thread = threading.Thread(
             target=app.run,
             kwargs={'host': args.host, 'port': args.port, 'threaded': True, 'use_reloader': False},
@@ -126,10 +121,10 @@ def main():
         )
         server_thread.start()
 
-        # Load and run GUI (this will block in the main thread)
-        mock_gui = _load_mock_gui_module()
-        # mock_gui.run_gui accepts display_state and command_queue optionally; pass the queue
-        mock_gui.run_gui(display_state=None, command_queue=cmd_q)
+        # Load and run console (this will block in the main thread)
+        mock_console = _load_mock_console_module()
+        # mock_console.run_mock accepts display_state and command_queue optionally; pass the queue
+        mock_console.run_mock(display_state=None, command_queue=cmd_q)
     else:
         # Default: run API server and write to hardware as before
         globals()['_API_WRITE_HARDWARE'] = True
