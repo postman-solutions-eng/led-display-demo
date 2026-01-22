@@ -3,9 +3,7 @@
     "id": "cfb4fe50-fe32-4905-9c31-0edf143b987e"
   },
   "entities": {
-    "collections": [
-      "../postman/collections/LED Name Badge API.postman_collection.json"
-    ],
+    "collections": [],
     "environments": [],
     "specs": [],
     "flows": [],
