@@ -1,0 +1,393 @@
+openapi: 3.0.0
+info:
+  title: Final LED Display API
+  version: 1.0.0
+  description: >-
+    # API for controlling LED name badge displays
+
+
+    This API allows you to update the text and visual content displayed on LED
+    badges, including support for alphanumeric text and predefined icon codes.
+
+
+    ## Supported Icons
+
+
+    The following icon codes can be embedded in text using the `:icon_name:`
+    syntax:
+
+
+    - `:ball:` - Filled circle
+        
+    - `:happy:` - Simple smiley face
+        
+    - `:happy2:` - Larger smiley (2 columns wide)
+        
+    - `:heart:` - Outline heart
+        
+    - `:HEART:` - Filled heart
+        
+    - `:heart2:` - Larger outline heart (2 columns wide)
+        
+    - `:HEART2:` - Larger filled heart (2 columns wide)
+        
+    - `:fablab:` - FabLab logo
+        
+    - `:bicycle:` - Bicycle icon (3 columns wide)
+        
+    - `:bicycle_r:` - Bicycle facing right (3 columns wide)
+        
+    - `:owncloud:` - OwnCloud logo (3 columns wide)
+        
+    - `:octocat:` - GitHub Octocat
+        
+    - `:smile:` - Smile emoji
+        
+    - `:star:` - Star icon
+        
+    - `:sun:` - Sun icon
+        
+
+    ## Character Restrictions
+
+
+    **Supported characters:**
+
+
+    - Letters: A-Z, a-z
+        
+    - Numbers: 0-9
+        
+    - Special characters: `^ !"$%&/()=?` °}\]\[{@ \~ |<>,;.:-_#'+_\`
+        
+    - German umlauts: äöüÄÖÜß
+        
+    - French/European accents: àäòöùüèéêëôöûîïÿçÀÅÄÉÈÊËÖÔÜÛÙŸŠ
+        
+
+    **NOT supported:**
+
+
+    - Unicode emoji (e.g., 🌍) - will return a 400 error
+        
+
+    **Escape sequences:**
+
+
+    - `::` - Escapes to a single literal colon
+        
+
+    **Custom images:**
+
+
+    - Use `:path/to/image.png:` syntax to reference custom images
+        
+    - Images must be exactly 11 pixels high
+        
+
+    ## Additional Capabilities (not exposed in API yet)
+
+
+    - **Brightness control:** 25%, 50%, 75%, 100%
+        
+    - **Animation modes:** 0-8 (various scroll and display effects)
+        
+    - **Speed control:** 1-8 (animation speed)
+        
+    - **Blink effect:** Enable/disable blinking
+        
+    - **Ant effect:** Marching border animation
+        
+
+    ## How the spec was created
+
+
+    This spec was created by having analyzed the backend Python code with
+    Postman Agent mode with the following prompt:
+
+
+    > The spec and the Postman collection both seem very incomplete, not
+    containing all possible icons and other character restrictions. Can you scan
+    the backend API code to find out what additional endpoints and capabilities
+    regarding icons and character restrictions there are and update the spec
+    accordingly?
+servers:
+  - url: http://127.0.0.1:5001
+paths:
+  /display-text:
+    post:
+      summary: Display Text
+      responses:
+        '200':
+          description: Success with Text + Heart Icon
+          headers:
+            Server:
+              schema:
+                type: string
+              example: Werkzeug/3.1.5 Python/3.13.7
+            Date:
+              schema:
+                type: string
+              example: Mon, 19 Jan 2026 12:16:21 GMT
+            Content-Length:
+              schema:
+                type: integer
+              example: '65'
+            Connection:
+              schema:
+                type: string
+              example: close
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  text:
+                    type: string
+              example:
+                status: Text displayed on LED
+                text: 'Hello World! :heart:'
+        '400':
+          description: Failure HTML Response (Unicode)?
+          headers:
+            Server:
+              schema:
+                type: string
+              example: Werkzeug/3.1.4 Python/3.13.5
+            Date:
+              schema:
+                type: string
+              example: Mon, 19 Jan 2026 12:47:31 GMT
+            Content-Length:
+              schema:
+                type: integer
+              example: '69'
+            Connection:
+              schema:
+                type: string
+              example: close
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  details:
+                    type: string
+                  error:
+                    type: string
+              example:
+                details: '''🌍'''
+                error: Invalid display string format
+        '500':
+          description: Error when not started with right permissions
+          headers:
+            Server:
+              schema:
+                type: string
+              example: Werkzeug/3.1.4 Python/3.13.5
+            Date:
+              schema:
+                type: string
+              example: Mon, 19 Jan 2026 12:16:58 GMT
+            Content-Length:
+              schema:
+                type: integer
+              example: '265'
+            Connection:
+              schema:
+                type: string
+              example: close
+      tags:
+        - display-text
+      description: >-
+        Updates the text and visual content displayed on the LED name badge.
+        Accepts text and icon codes in the format `:icon_name:`.
+
+
+        <img
+        src="https://content.pstmn.io/05b1ef2c-9fd3-4f0e-8b2f-76998fb3f6e5/aW1hZ2UucG5n"
+        width="240">
+
+
+        ## Supported Icons
+
+
+        The following icon codes can be embedded in text using the `:icon_name:`
+        syntax:
+
+
+        - `:ball:` - Filled circle
+            
+        - `:happy:` - Simple smiley face
+            
+        - `:happy2:` - Larger smiley (2 columns wide)
+            
+        - `:heart:` - Outline heart
+            
+        - `:HEART:` - Filled heart
+            
+        - `:heart2:` - Larger outline heart (2 columns wide)
+            
+        - `:HEART2:` - Larger filled heart (2 columns wide)
+            
+        - `:fablab:` - FabLab logo
+            
+        - `:bicycle:` - Bicycle icon (3 columns wide)
+            
+        - `:bicycle_r:` - Bicycle facing right (3 columns wide)
+            
+        - `:owncloud:` - OwnCloud logo (3 columns wide)
+            
+        - `:octocat:` - GitHub Octocat
+            
+        - `:smile:` - Smile emoji
+            
+        - `:star:` - Star icon
+            
+        - `:sun:` - Sun icon
+            
+
+        ## Character Restrictions
+
+
+        **Supported characters:**
+
+
+        - Letters: A-Z, a-z
+            
+        - Numbers: 0-9
+            
+        - Special characters: `^ !"$%&/()=?` °}\]\[{@ \~ |<>,;.:-_#'+_\`
+            
+        - German umlauts: äöüÄÖÜß
+            
+        - French/European accents: àäòöùüèéêëôöûîïÿçÀÅÄÉÈÊËÖÔÜÛÙŸŠ
+            
+
+        **NOT supported:**
+
+
+        - Unicode emoji (e.g., 🌍) - will return a 400 error
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                text:
+                  type: string
+                  description: >-
+                    The text to display, optionally including icon codes in
+                    icon_name format
+            example:
+              text: Hello World!
+  /predefined-icons:
+    get:
+      summary: Get Predefined Icons
+      responses:
+        '200':
+          description: List of all available icon codes
+          headers:
+            Server:
+              schema:
+                type: string
+              example: Werkzeug/3.1.5 Python/3.13.7
+            Date:
+              schema:
+                type: string
+              example: Mon, 19 Jan 2026 12:20:00 GMT
+            Connection:
+              schema:
+                type: string
+              example: close
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  icons:
+                    type: array
+                    description: Array of icon codes in :icon_name format
+                    items:
+                      type: string
+              example:
+                icons:
+                  - ':ball:'
+                  - ':happy:'
+                  - ':happy2:'
+                  - ':heart:'
+                  - ':HEART:'
+                  - ':heart2:'
+                  - ':HEART2:'
+                  - ':fablab:'
+                  - ':bicycle:'
+                  - ':bicycle_r:'
+                  - ':owncloud:'
+                  - ':octocat:'
+                  - ':smile:'
+                  - ':star:'
+                  - ':sun:'
+      tags:
+        - predefined-icons
+      description: >-
+        Returns a list of all available icon codes that can be used in display
+        text. Icons are returned as simple string codes in the `:icon_name:`
+        format.
+  /display-summary:
+    post:
+      summary: Display Summary
+      responses:
+        '200':
+          description: Summary message displayed successfully
+          headers:
+            Server:
+              schema:
+                type: string
+              example: Werkzeug/3.1.5 Python/3.13.7
+            Date:
+              schema:
+                type: string
+              example: Mon, 19 Jan 2026 12:25:00 GMT
+            Connection:
+              schema:
+                type: string
+              example: close
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Status of the operation
+              example:
+                status: Summary displayed on LED
+      tags:
+        - display-summary
+      description: >-
+        Displays a predefined summary message on the LED badge. This endpoint
+        provides a quick way to show common status messages without constructing
+        custom text.
+
+
+        Note: The API does not validate the type parameter and will return
+        success for any type value provided.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  description: >-
+                    The type of summary message to display (e.g., welcome,
+                    status, alert, info)
+                customText:
+                  type: string
+                  description: Optional custom text to append to the summary
+            example:
+              type: welcome
+              customText: John

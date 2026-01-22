@@ -1,0 +1,95 @@
+{
+  "info": {
+    "_postman_id": "9c8766cc-2eb6-4638-9c05-5a263acb2814",
+    "name": "LED Display API - Data File Test Suite",
+    "description": "Test suite for the /display-text endpoint covering various scenarios including valid messages with icons, invalid Unicode characters, edge cases, and special characters.\n\nThis test suite was generated with the following prompt:\n\n> \"Can you create a new collection and data file that mixes allowed messages with allowed icons and invalid messages and test whether the expected results occur?\"",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Display Text Test",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Get expected values from iteration data",
+              "const expectedStatus = parseInt(pm.iterationData.get('expectedStatus') || pm.variables.get('expectedStatus'));",
+              "const testDescription = pm.iterationData.get('testDescription') || pm.variables.get('testDescription') || 'Display Text Test';",
+              "",
+              "// Test 1: Validate status code matches expected",
+              "pm.test(`${testDescription}: Status code is ${expectedStatus}`, function () {",
+              "    pm.response.to.have.status(expectedStatus);",
+              "});",
+              "",
+              "// Test 2: Validate response structure",
+              "pm.test(`${testDescription}: Response has valid JSON structure`, function () {",
+              "    pm.response.to.be.json;",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData).to.be.an('object');",
+              "});",
+              "",
+              "// Test 3: Conditional validation based on expected status",
+              "if (expectedStatus === 200) {",
+              "    // For successful requests, verify success indicators",
+              "    pm.test(`${testDescription}: Response contains success indicators`, function () {",
+              "        const jsonData = pm.response.json();",
+              "        // Check for common success indicators",
+              "        const hasSuccessIndicator = ",
+              "            jsonData.success === true || ",
+              "            jsonData.status === 'success' ||",
+              "            jsonData.message !== undefined ||",
+              "            jsonData.text !== undefined;",
+              "        pm.expect(hasSuccessIndicator).to.be.true;",
+              "    });",
+              "} else if (expectedStatus === 400) {",
+              "    // For failed requests, verify error message is present",
+              "    pm.test(`${testDescription}: Response contains error message`, function () {",
+              "        const jsonData = pm.response.json();",
+              "        const hasErrorIndicator = ",
+              "            jsonData.error !== undefined || ",
+              "            jsonData.message !== undefined ||",
+              "            jsonData.detail !== undefined;",
+              "        pm.expect(hasErrorIndicator).to.be.true;",
+              "    });",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "id": "c7c3f623-3eed-477d-8133-43a4882fe877",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"text\": \"{{text}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/display-text",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "display-text"
+          ]
+        },
+        "description": "Tests the /display-text endpoint with various text inputs. Uses iteration data variables:\n- `text`: The text content to display\n- `expectedStatus`: Expected HTTP status code (200 or 400)\n- `testDescription`: Description of the test case"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "id": "5fd3e1b6-549b-4652-a52a-bd5156aeaf91",
+      "key": "baseUrl",
+      "value": "http://127.0.0.1:5001"
+    }
+  ]
+}
