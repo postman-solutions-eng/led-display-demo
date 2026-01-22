@@ -113,6 +113,15 @@ info:
     accordingly?
 servers:
   - url: http://127.0.0.1:5001
+security:
+  - apiKey: []
+components:
+  securitySchemes:
+    apiKey:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authenticating requests to the LED Display API
 paths:
   /display-text:
     post:
