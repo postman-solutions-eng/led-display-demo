@@ -18,6 +18,12 @@ Can you add two examples to the data file @"data-file.csv" - one succeeding and 
 
 Can you create a new collection called "Request Chaining example" that first gets the predefined icons in its first request, then save those to a collection variable and then use that collection variable in the subsequent request to display three random icons from the first request on the LED? Use the @"Final LED Display API" as reference collection for the needed requests
 
+### CI / CD
+
+Can you change the spec validation workflow that it does not reach out to the cloud but lint the @"Final LED Display API" from this repository instead?
+
+Can you create a GitHub Actions workflow that triggers on every repo push and runs the @"LED Display API - Data File Test Suite" with the data file @"data-file.csv" and the environment @"LED Display Mock Environment"
+
 ## MCP specific
 
 Can you provide a fancy greeting with the current weather in SF to the LED?

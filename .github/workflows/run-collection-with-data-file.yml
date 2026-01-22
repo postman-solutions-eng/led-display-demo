@@ -1,0 +1,27 @@
+name: Run LED Display API Collection with Data File
+
+on:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  run-collection-with-data:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run Collection with Data File and Environment
+        run: |
+          newman run "postman/collections/LED Display API - Data File Test Suite.postman_collection.json" \
+            -d "data-file.csv" \
+            -e "postman/environments/LED Display Mock Environment.postman_environment.json"
