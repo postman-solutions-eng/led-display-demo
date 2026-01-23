@@ -8,6 +8,8 @@ Can you create a mock server and environment for this collection?
 
 Can you create a new collection and data file that mixes allowed messages with allowed icons and invalid messages and test whether the expected results occur?
 
+Linting the spec shows two warnings that no 500 example has been given. Can you refactor the backend code in @"api.py" to a) use the RFC 9457 format for all error messages, b) introduce a reusable error component in a separate spec file that you c) reference the updated spec for all existing error examples and then also d) provide 500 examples referencing that shared schema component? f) Also modify the test cases to check for the new error format
+
 ## Mock specific
 
 Can you create a new collection and data file that mixes allowed messages with allowed icons and invalid messages and test whether the expected results occur?
