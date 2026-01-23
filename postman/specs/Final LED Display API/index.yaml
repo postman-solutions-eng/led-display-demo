@@ -122,6 +122,19 @@ components:
       in: header
       name: X-API-Key
       description: API key for authenticating requests to the LED Display API
+  responses:
+    ServerError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+                description: Error message describing what went wrong
+          example:
+            error: Internal server error occurred
 paths:
   /display-text:
     post:
@@ -338,6 +351,8 @@ paths:
                   - ':smile:'
                   - ':star:'
                   - ':sun:'
+        '500':
+          $ref: '#/components/responses/ServerError'
       tags:
         - predefined-icons
       description: >-
@@ -373,6 +388,8 @@ paths:
                     description: Status of the operation
               example:
                 status: Summary displayed on LED
+        '500':
+          $ref: '#/components/responses/ServerError'
       tags:
         - display-summary
       description: >-
