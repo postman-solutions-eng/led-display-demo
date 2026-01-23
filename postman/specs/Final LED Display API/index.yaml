@@ -123,18 +123,20 @@ components:
       name: X-API-Key
       description: API key for authenticating requests to the LED Display API
   responses:
-    ServerError:
+    InternalServerError:
       description: Internal server error
       content:
         application/json:
           schema:
-            type: object
-            properties:
-              error:
-                type: string
-                description: Error message describing what went wrong
-          example:
-            error: Internal server error occurred
+            $ref: https://components.pstmn.io/automotive-demo/RFC-9457-Error/RFC-9457-Error-2.0#/components/schemas/ProblemDetails 
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: string
 paths:
   /display-text:
     post:
@@ -193,12 +195,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  details:
-                    type: string
-                  error:
-                    type: string
+                $ref: '#/components/schemas/ErrorResponse'
               example:
                 details: '''🌍'''
                 error: Invalid display string format
@@ -221,6 +218,10 @@ paths:
               schema:
                 type: string
               example: close
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       tags:
         - display-text
       description: >-
@@ -352,7 +353,7 @@ paths:
                   - ':star:'
                   - ':sun:'
         '500':
-          $ref: '#/components/responses/ServerError'
+          $ref: '#/components/responses/InternalServerError'
       tags:
         - predefined-icons
       description: >-
@@ -388,8 +389,6 @@ paths:
                     description: Status of the operation
               example:
                 status: Summary displayed on LED
-        '500':
-          $ref: '#/components/responses/ServerError'
       tags:
         - display-summary
       description: >-
