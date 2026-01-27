@@ -11,7 +11,7 @@ import os
 app = Flask(__name__)
 
 
-def _process_and_write(text, command_queue=None, write_hardware=True):
+def _process_and_write(text, api_key=None, command_queue=None, write_hardware=True, response_queue=None):
     """Create the scene buffer for `text` and either write to hardware,
     post to the mock console output via `command_queue`, or both depending on flags.
     """
@@ -29,9 +29,14 @@ def _process_and_write(text, command_queue=None, write_hardware=True):
             print(f"_process_and_write: hardware write failed: {e}")
 
     if command_queue is not None:
-        # API mock expects only `text` updates
+        # API mock expects `text` updates, optionally with x-api-key
         try:
-            command_queue.put({'type': 'update', 'data': {'text': text}})
+            update_data = {'text': text}
+            if api_key is not None:
+                update_data['x-api-key'] = api_key
+            if response_queue is not None:
+                update_data['response_queue'] = response_queue
+            command_queue.put({'type': 'update', 'data': update_data})
         except Exception as e:
             print(f"_process_and_write: enqueue failed: {e}")
 
@@ -40,6 +45,9 @@ def _process_and_write(text, command_queue=None, write_hardware=True):
 def display_text():
     data = request.get_json()
     text = data.get('text', '')
+    
+    # Get x-api-key header if present
+    api_key = request.headers.get('x-api-key')
 
     try:
         # Validate and prepare scene; actual write/mocking handled in main
@@ -53,9 +61,27 @@ def display_text():
     # On actual run, the main program will decide whether to write to
     # hardware and/or the mock console by providing globals.
     global _API_COMMAND_QUEUE, _API_WRITE_HARDWARE
-    _process_and_write(text, command_queue=globals().get('_API_COMMAND_QUEUE'), write_hardware=globals().get('_API_WRITE_HARDWARE', True))
-
-    return {'status': 'Text displayed on LED', 'text': text}, 200
+    
+    response = {'status': 'Text displayed on LED', 'text': text}
+    
+    # If api_key is set and mock is running, request mock_image from mock server
+    response_queue = None
+    if api_key and globals().get('_API_COMMAND_QUEUE'):
+        response_queue = queue.Queue()
+    
+    _process_and_write(text, api_key=api_key, command_queue=globals().get('_API_COMMAND_QUEUE'), 
+                       write_hardware=globals().get('_API_WRITE_HARDWARE', True), response_queue=response_queue)
+    
+    # Wait for response from mock if we requested one
+    if response_queue:
+        try:
+            mock_response = response_queue.get(timeout=60.0)
+            if 'mock_image' in mock_response:
+                response['mock_image'] = mock_response['mock_image']
+        except queue.Empty:
+            response['mock_image'] = 'error: timeout waiting for mock response'
+    
+    return response, 200
 
 
 @app.route('/predefined-icons', methods=['GET'])

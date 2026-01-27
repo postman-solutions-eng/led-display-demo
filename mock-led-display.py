@@ -9,6 +9,8 @@ import time
 import sys
 import threading
 from lednamebadge import SimpleTextAndIcons
+from openai import OpenAI
+import base64
 
 # Global creator to reuse SimpleTextAndIcons for bitmap generation
 creator = SimpleTextAndIcons()
@@ -73,6 +75,7 @@ class DisplayState:
         self.color = 'red'
         self.scroll_position = 0
         self.is_running = False
+        self.x_api_key = None
 
     def clear(self):
         self.text = ""
@@ -80,6 +83,7 @@ class DisplayState:
         self.text_width = 0
         self.scroll_position = 0
         self.is_running = False
+        self.x_api_key = None
 
 
 # ============================================
@@ -164,12 +168,49 @@ class ConsoleDisplay:
                         self.display_state.brightness = 100
                         self.display_state.color = 'red'
                         changed = True
+                    if 'x-api-key' in data:
+                        self.display_state.x_api_key = data['x-api-key']
+                        print(f"[API Key Received in Mock] {self.display_state.x_api_key.replace(self.display_state.x_api_key[10:-10], '**********')}")
+                    # If response_queue is provided, send back the current display state
+                    if 'response_queue' in data:
+                        response_queue = data['response_queue']
+                        mock_image = self._generate_mock_image()
+                        response_queue.put({'mock_image': mock_image})
                 elif command['type'] == 'clear':
                     self.display_state.clear()
                     changed = True
         except queue.Empty:
             pass
         return changed
+    
+    def _generate_mock_image(self):
+        """Generate an image using OpenAI based on the display text."""
+        if not self.display_state.text or not self.display_state.x_api_key:
+            return ""
+        
+        try:
+            # Initialize OpenAI client with the provided API key
+            client = OpenAI(api_key=self.display_state.x_api_key)
+            
+            # Create a prompt based on the LED display text
+            prompt = f"""
+A children's book drawing style image representing the text: {self.display_state.text}
+Create a simple, colorful, and friendly illustration.
+"""
+            
+            # Generate image using OpenAI
+            result = client.images.generate(
+                model="gpt-image-1",
+                prompt=prompt
+            )
+            
+            # Return base64 encoded image
+            image_base64 = result.data[0].b64_json
+            return image_base64
+            
+        except Exception as e:
+            print(f"Error generating image with OpenAI: {e}")
+            return f"error: {str(e)}"
 
     def run(self):
         try:
