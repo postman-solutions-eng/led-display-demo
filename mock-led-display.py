@@ -76,6 +76,7 @@ class DisplayState:
         self.scroll_position = 0
         self.is_running = False
         self.x_api_key = None
+        self.custom_prompt = None
 
     def clear(self):
         self.text = ""
@@ -84,6 +85,7 @@ class DisplayState:
         self.scroll_position = 0
         self.is_running = False
         self.x_api_key = None
+        self.custom_prompt = None
 
 
 # ============================================
@@ -171,6 +173,9 @@ class ConsoleDisplay:
                     if 'x-api-key' in data:
                         self.display_state.x_api_key = data['x-api-key']
                         print(f"[API Key Received in Mock] {self.display_state.x_api_key.replace(self.display_state.x_api_key[10:-10], '**********')}")
+                    if 'x-openai-prompt' in data:
+                        self.display_state.custom_prompt = data['x-openai-prompt']
+                        print(f"[Custom OpenAI Prompt Set: {self.display_state.custom_prompt[:50]}...]")
                     # If response_queue is provided, generate image in background thread
                     if 'response_queue' in data:
                         response_queue = data['response_queue']
@@ -198,8 +203,12 @@ class ConsoleDisplay:
             # Initialize OpenAI client with the provided API key
             client = OpenAI(api_key=self.display_state.x_api_key)
             
-            # Create a prompt based on the LED display text
-            prompt = f"""
+            # Use custom prompt if provided, otherwise use default
+            if self.display_state.custom_prompt:
+                prompt = self.display_state.custom_prompt.replace('{text}', self.display_state.text)
+            else:
+                # Default prompt
+                prompt = f"""
 Create an image of the berlin tv tower with an LED display showing the following text:
 {self.display_state.text}
 """
