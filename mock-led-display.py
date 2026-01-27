@@ -200,8 +200,8 @@ class ConsoleDisplay:
             
             # Create a prompt based on the LED display text
             prompt = f"""
-A children's book drawing style image representing the text: {self.display_state.text}
-Create a simple, colorful, and friendly illustration.
+Create an image of the berlin tv tower with an LED display showing the following text:
+{self.display_state.text}
 """
             
             # Generate image using OpenAI
