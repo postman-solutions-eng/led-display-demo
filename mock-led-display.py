@@ -171,17 +171,23 @@ class ConsoleDisplay:
                     if 'x-api-key' in data:
                         self.display_state.x_api_key = data['x-api-key']
                         print(f"[API Key Received in Mock] {self.display_state.x_api_key.replace(self.display_state.x_api_key[10:-10], '**********')}")
-                    # If response_queue is provided, send back the current display state
+                    # If response_queue is provided, generate image in background thread
                     if 'response_queue' in data:
                         response_queue = data['response_queue']
-                        mock_image = self._generate_mock_image()
-                        response_queue.put({'mock_image': mock_image})
+                        # Run image generation in a separate thread so terminal rendering isn't blocked
+                        thread = threading.Thread(target=self._generate_and_send_mock_image, args=(response_queue,), daemon=True)
+                        thread.start()
                 elif command['type'] == 'clear':
                     self.display_state.clear()
                     changed = True
         except queue.Empty:
             pass
         return changed
+    
+    def _generate_and_send_mock_image(self, response_queue):
+        """Generate image in background and send to response queue."""
+        mock_image = self._generate_mock_image()
+        response_queue.put({'mock_image': mock_image})
     
     def _generate_mock_image(self):
         """Generate an image using OpenAI based on the display text."""
