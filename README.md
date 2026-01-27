@@ -450,7 +450,11 @@ This project exposes a small HTTP API used to send text to the LED badge (or to 
 - POST `/display-text`
     - Content-Type: `application/json`
     - Body: `{"text": "..."}`
+    - Headers (optional):
+        - `x-api-key`: OpenAI API key to enable AI-generated image response
+        - `x-openai-prompt`: Custom prompt for image generation (use `{text}` as placeholder for display text)
     - Success: `200` with `{"status": "Text displayed on LED", "text": "..."}`
+    - With `x-api-key`: `200` with `{"status": "Text displayed on LED", "text": "...", "mock_image": "base64-encoded-image"}`
     - Error: `400` with `{"error": "Invalid display string format", "details": "..."}`
 
 - GET `/predefined-icons`
@@ -471,10 +475,25 @@ Notes:
 Example:
 
 ```bash
+# Basic text display
 curl -X POST http://localhost:5001/display-text \
     -H "Content-Type: application/json" \
     -d '{"text":"Hello :star:"}'
 
+# With AI-generated image (default prompt: Berlin TV tower)
+curl -X POST http://localhost:5001/display-text \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: sk-your-openai-api-key" \
+    -d '{"text":"Hello World"}'
+
+# With AI-generated image and custom prompt
+curl -X POST http://localhost:5001/display-text \
+    -H "Content-Type: application/json" \
+    -H "x-api-key: sk-your-openai-api-key" \
+    -H "x-openai-prompt: A futuristic robot holding a digital sign that says: {text}" \
+    -d '{"text":"Hello World"}'
+
+# Get predefined icons
 curl http://localhost:5001/predefined-icons
 ```
 
