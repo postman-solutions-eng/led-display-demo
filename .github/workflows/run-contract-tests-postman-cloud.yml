@@ -33,6 +33,7 @@ on:
 jobs:
   contract-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     env:
       LOCAL_COLLECTION: postman/collections/LED Display Contract Tests
       LOCAL_ENVIRONMENT: postman/environments/LED Display Mock Environment.environment.yaml
