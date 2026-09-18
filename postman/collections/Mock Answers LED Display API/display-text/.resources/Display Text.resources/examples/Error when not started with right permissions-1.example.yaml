@@ -27,7 +27,7 @@ response:
     Content-Length: "265"
     Connection: close
   body:
-    type: text
+    type: json
     content: |-
       {
         "error": "Internal Server Error",

@@ -215,6 +215,18 @@ paths:
               example:
                 details: '''🌍'''
                 error: Invalid display string format
+        '403':
+          description: Permission denied accessing the LED device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Permission denied
+                details: >-
+                  The server does not have permission to access the LED device.
+                  Start the server with sufficient privileges or configure udev
+                  rules.
         '500':
           description: Error when not started with right permissions
           headers:
@@ -234,6 +246,15 @@ paths:
               schema:
                 type: string
               example: close
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Internal Server Error
+                details: >-
+                  Probably the server has not been started with the right
+                  permissions to access the LED
       tags:
         - display-text
       description: >-
@@ -489,7 +510,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
-  
+        '403':
+          description: Permission denied accessing the LED device
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Permission denied
+                details: >-
+                  The server does not have permission to access the LED device.
+                  Start the server with sufficient privileges or configure udev
+                  rules.
+        '500':
+          description: Error when not started with right permissions
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                error: Internal Server Error
+                details: >-
+                  Probably the server has not been started with the right
+                  permissions to access the LED
+        '502':
+          description: Postman API catalog request failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
       tags:
         - display-summary
       description: >-

@@ -22,6 +22,8 @@ description: >-
       
   - Display Text: "Error when not started with right permissions" (expects 500)
       
+  - Display Text: "Permission denied accessing LED" (expects 403)
+      
   - Display Summary: "Summary message displayed successfully" (expects 200)
       
   - Get Predefined Icons: "List of all available icon codes" (expects 200)

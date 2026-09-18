@@ -18,7 +18,9 @@ scripts:
       });
 
       pm.test("Response indicates server error", function () {
-          pm.expect(pm.response.status).to.equal("Internal Server Error");
+          const body = pm.response.json();
+          pm.expect(body.error).to.equal("Internal Server Error");
+          pm.expect(body.details).to.include("right permissions to access the LED");
       });
     language: text/javascript
 order: 3000

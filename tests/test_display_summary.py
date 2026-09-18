@@ -2,6 +2,7 @@ import sys
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+_lednamebadge_backup = sys.modules.get('lednamebadge')
 _mock_creator = MagicMock()
 _mock_lednamebadge = MagicMock()
 _mock_lednamebadge.SimpleTextAndIcons.return_value = _mock_creator
@@ -11,11 +12,18 @@ from api import DEFAULT_SUMMARY, app  # noqa: E402
 
 
 class TestDisplaySummary(TestCase):
+    @classmethod
+    def tearDownClass(cls):
+        if _lednamebadge_backup is not None:
+            sys.modules['lednamebadge'] = _lednamebadge_backup
+        else:
+            sys.modules.pop('lednamebadge', None)
+
     def setUp(self):
         self.client = app.test_client()
 
     def test_display_summary_without_postman_key_uses_default(self):
-        with patch('api._process_and_write') as write_mock:
+        with patch('api._process_and_write', return_value=None) as write_mock:
             response = self.client.post(
                 '/display-summary',
                 json={'type': 'welcome'},
@@ -28,7 +36,7 @@ class TestDisplaySummary(TestCase):
         self.assertEqual(write_mock.call_args.args[0], DEFAULT_SUMMARY)
 
     def test_display_summary_with_empty_api_key_uses_default(self):
-        with patch('api._process_and_write') as write_mock, patch(
+        with patch('api._process_and_write', return_value=None) as write_mock, patch(
             'api.fetch_catalog_summary',
         ) as fetch_mock:
             response = self.client.post(
@@ -56,6 +64,7 @@ class TestDisplaySummary(TestCase):
         }
         with patch('api.fetch_catalog_summary', return_value=catalog_summary) as fetch_mock, patch(
             'api._process_and_write',
+            return_value=None,
         ) as write_mock:
             response = self.client.post(
                 '/display-summary',
@@ -87,3 +96,35 @@ class TestDisplaySummary(TestCase):
         self.assertEqual(response.status_code, 401)
         body = response.get_json()
         self.assertEqual(body['error'], 'Failed to fetch API catalog')
+
+    def test_display_summary_returns_500_when_hardware_write_fails(self):
+        from api import LED_HARDWARE_DETAILS, LED_HARDWARE_ERROR
+
+        with patch('api._process_and_write', return_value=(
+            {'error': LED_HARDWARE_ERROR, 'details': LED_HARDWARE_DETAILS},
+            500,
+        )):
+            response = self.client.post(
+                '/display-summary',
+                json={'type': 'welcome'},
+            )
+
+        self.assertEqual(response.status_code, 500)
+        body = response.get_json()
+        self.assertEqual(body['error'], LED_HARDWARE_ERROR)
+
+    def test_display_summary_returns_403_when_hardware_write_is_denied(self):
+        from api import LED_PERMISSION_DETAILS, LED_PERMISSION_ERROR
+
+        with patch('api._process_and_write', return_value=(
+            {'error': LED_PERMISSION_ERROR, 'details': LED_PERMISSION_DETAILS},
+            403,
+        )):
+            response = self.client.post(
+                '/display-summary',
+                json={'type': 'welcome'},
+            )
+
+        self.assertEqual(response.status_code, 403)
+        body = response.get_json()
+        self.assertEqual(body['error'], LED_PERMISSION_ERROR)

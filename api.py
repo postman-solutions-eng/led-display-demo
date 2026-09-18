@@ -4,6 +4,7 @@ from postman_catalog import PostmanCatalogError, fetch_catalog_summary
 from array import array
 
 import argparse
+import errno
 import threading
 import queue
 import importlib.util
@@ -11,6 +12,16 @@ import os
 import base64
 import struct
 import zlib
+
+LED_PERMISSION_ERROR = 'Permission denied'
+LED_PERMISSION_DETAILS = (
+    'The server does not have permission to access the LED device. '
+    'Start the server with sufficient privileges or configure udev rules.'
+)
+LED_HARDWARE_ERROR = 'Internal Server Error'
+LED_HARDWARE_DETAILS = (
+    'Probably the server has not been started with the right permissions to access the LED'
+)
 
 DEFAULT_SUMMARY = "Open LED Badge - Free, hackable, and fun! :star: :heart:"
 
@@ -62,9 +73,40 @@ def _icon_to_png_base64(data, cols, scale=ICON_SCALE):
     return 'data:image/png;base64,' + base64.b64encode(png).decode('ascii')
 
 
+def _is_led_permission_error(exc):
+    if isinstance(exc, PermissionError):
+        return True
+    if isinstance(exc, OSError) and getattr(exc, 'errno', None) in (errno.EACCES, errno.EPERM):
+        return True
+    message = str(exc).lower()
+    return any(marker in message for marker in (
+        'permission denied',
+        'access denied',
+        'operation not permitted',
+        'insufficient permissions',
+        'not permitted',
+        'run this tool as root',
+    ))
+
+
+def _hardware_write_error_response(exc):
+    if _is_led_permission_error(exc):
+        return {
+            'error': LED_PERMISSION_ERROR,
+            'details': LED_PERMISSION_DETAILS,
+        }, 403
+    return {
+        'error': LED_HARDWARE_ERROR,
+        'details': LED_HARDWARE_DETAILS,
+    }, 500
+
+
 def _process_and_write(text, command_queue=None, write_hardware=True):
     """Create the scene buffer for `text` and either write to hardware,
     post to the mock console output via `command_queue`, or both depending on flags.
+
+    Returns an (error_body, status_code) tuple when a hardware write fails,
+    otherwise None.
     """
     creator = SimpleTextAndIcons()
     scene_bitmap = creator.bitmap(text)
@@ -78,6 +120,7 @@ def _process_and_write(text, command_queue=None, write_hardware=True):
             LedNameBadge.write(buf)
         except Exception as e:
             print(f"_process_and_write: hardware write failed: {e}")
+            return _hardware_write_error_response(e)
 
     if command_queue is not None:
         # API mock expects only `text` updates
@@ -85,6 +128,8 @@ def _process_and_write(text, command_queue=None, write_hardware=True):
             command_queue.put({'type': 'update', 'data': {'text': text}})
         except Exception as e:
             print(f"_process_and_write: enqueue failed: {e}")
+
+    return None
 
 
 @app.route('/display-text', methods=['POST'])
@@ -104,7 +149,13 @@ def display_text():
     # On actual run, the main program will decide whether to write to
     # hardware and/or the mock console by providing globals.
     global _API_COMMAND_QUEUE, _API_WRITE_HARDWARE
-    _process_and_write(text, command_queue=globals().get('_API_COMMAND_QUEUE'), write_hardware=globals().get('_API_WRITE_HARDWARE', True))
+    write_error = _process_and_write(
+        text,
+        command_queue=globals().get('_API_COMMAND_QUEUE'),
+        write_hardware=globals().get('_API_WRITE_HARDWARE', True),
+    )
+    if write_error:
+        return write_error
 
     return {'status': 'Text displayed on LED', 'text': text}, 200
 
@@ -152,7 +203,13 @@ def display_summary():
         return {'error': 'Invalid display string format', 'details': str(e)}, 400
 
     global _API_COMMAND_QUEUE, _API_WRITE_HARDWARE
-    _process_and_write(summary, command_queue=globals().get('_API_COMMAND_QUEUE'), write_hardware=globals().get('_API_WRITE_HARDWARE', True))
+    write_error = _process_and_write(
+        summary,
+        command_queue=globals().get('_API_COMMAND_QUEUE'),
+        write_hardware=globals().get('_API_WRITE_HARDWARE', True),
+    )
+    if write_error:
+        return write_error
 
     response = {'status': 'Summary displayed on LED'}
     if catalog_summary is not None:

@@ -1,4 +1,5 @@
 $kind: http-example
+name: Error when not started with right permissions
 request:
   url: "{{baseUrl}}/display-text"
   method: POST
@@ -26,10 +27,10 @@ response:
     Content-Length: "265"
     Connection: close
   body:
-    type: text
+    type: json
     content: |-
       {
-        "error": "string",
-        "details": "string"
+        "error": "Internal Server Error",
+        "details": "Probably the server has not been started with the right permissions to access the LED"
       }
 order: 3000

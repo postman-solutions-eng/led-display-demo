@@ -1,5 +1,5 @@
 $kind: http-example
-name: Error when not started with right permissions
+name: Permission denied accessing LED
 request:
   url: "{{baseUrl}}/display-text"
   method: POST
@@ -15,11 +15,11 @@ request:
     type: json
     content: |-
       {
-        "text": "Are you up correctly?"
+        "text": "Hello World!"
       }
 response:
-  statusCode: 500
-  statusText: Internal Server Error
+  statusCode: 403
+  statusText: Forbidden
   headers:
     Content-Type: application/json
     Server: Werkzeug/3.1.4 Python/3.13.5
@@ -30,7 +30,7 @@ response:
     type: json
     content: |-
       {
-        "error": "Internal Server Error",
-        "details": "Probably the server has not been started with the right permissions to access the LED"
+        "error": "Permission denied",
+        "details": "The server does not have permission to access the LED device. Start the server with sufficient privileges or configure udev rules."
       }
-order: 53000
+order: 4100

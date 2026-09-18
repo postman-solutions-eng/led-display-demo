@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{baseUrl}}/display-text"
+method: POST
+headers:
+  Content-Type: application/json
+  x-mock-response-code: "403"
+body:
+  type: json
+  content: |-
+    {
+      "text": "Hello World!"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 403", function () {
+          pm.response.to.have.status(403);
+      });
+
+      pm.test("Response indicates permission denied", function () {
+          const body = pm.response.json();
+          pm.expect(body.error).to.equal("Permission denied");
+          pm.expect(body.details).to.include("permission to access the LED device");
+      });
+    language: text/javascript
+order: 3100
